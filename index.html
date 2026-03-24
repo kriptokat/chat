@@ -232,11 +232,29 @@
             background: #eab308;
             box-shadow: 0 0 4px #eab308;
         }
+        .status-light.pending {
+            background: #f97316;
+            box-shadow: 0 0 4px #f97316;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
 
         .contact-name {
             font-weight: 600;
             font-size: 0.8rem;
             color: #0f172a;
+        }
+
+        .pending-badge {
+            font-size: 0.55rem;
+            background: #f97316;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-left: 5px;
         }
 
         .contact-peerid {
@@ -416,6 +434,11 @@
             border-bottom-left-radius: 4px;
         }
 
+        .message-content.pending {
+            opacity: 0.7;
+            font-style: italic;
+        }
+
         .message-content.file-message {
             background: #eef2ff;
             cursor: pointer;
@@ -579,7 +602,7 @@
 
         <div class="input-container">
             <div class="message-input-row">
-                <input type="text" id="messageInput" placeholder="Mesaj yazın..." disabled>
+                <input type="text" id="messageInput" placeholder="Mesaj yazın (bağlantı yoksa beklemeye alınır)..." disabled>
                 <button id="sendButton" disabled>Gönder</button>
             </div>
             <div class="action-buttons-row">
@@ -604,7 +627,7 @@
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
-        // ============ BAĞLANTI DURUM YÖNETİMİ ============
+        // ============ BEKLEYEN MESAJLAR SİSTEMİ ============
         let myPermanentId = null;
         let peer = null;
         let currentConnection = null;
@@ -614,7 +637,8 @@
         let activeContactName = "";
         let emojiPicker = null;
         
-        // Her kişi için bağlantı durumu: 'connected', 'connecting', 'disconnected'
+        // Her kişi için bekleyen mesajlar kuyruğu
+        let pendingMessages = {}; // { contactId: [ {type, content, fileData, mime, name} ] }
         let contactStatus = {};
 
         let contacts = [];
@@ -658,13 +682,96 @@
             return newId;
         }
 
-        // Bağlantı durumunu güncelle
+        // Bekleyen mesajları gönder
+        function flushPendingMessages(contactId) {
+            if (!pendingMessages[contactId] || pendingMessages[contactId].length === 0) return;
+            if (!currentConnection || !isConnected || activeContactId !== contactId) return;
+            
+            const pending = [...pendingMessages[contactId]];
+            pendingMessages[contactId] = [];
+            
+            for (const msg of pending) {
+                try {
+                    if (msg.type === 'text') {
+                        currentConnection.send({ type: 'text', text: msg.content });
+                    } else if (msg.type === 'file') {
+                        currentConnection.send({ type: 'file', name: msg.name, data: msg.fileData, mime: msg.mime });
+                    } else if (msg.type === 'image') {
+                        currentConnection.send({ type: 'image', name: msg.name, data: msg.fileData, mime: msg.mime });
+                    }
+                    
+                    // Mesajı geçmişe ekle (beklemeden sonra başarılı gönderim)
+                    addMessageToHistory(contactId, msg.content || msg.name, 'Ben', true, msg.type, msg.fileData, msg.mime);
+                } catch (err) {
+                    console.error('Bekleyen mesaj gönderilemedi:', err);
+                    // Hata olursa tekrar kuyruğa al
+                    if (!pendingMessages[contactId]) pendingMessages[contactId] = [];
+                    pendingMessages[contactId].unshift(msg);
+                }
+            }
+            
+            if (pending.length > 0) {
+                addSystemMessageToActive(`${pending.length} bekleyen mesaj gönderildi.`);
+                updateContactStatus(contactId, 'connected');
+                renderContactsList();
+            }
+        }
+
+        // Mesajı bekleme kuyruğuna ekle
+        function queueMessage(contactId, messageData) {
+            if (!pendingMessages[contactId]) pendingMessages[contactId] = [];
+            pendingMessages[contactId].push(messageData);
+            
+            // Bekleyen mesaj varsa durumu güncelle
+            if (contactStatus[contactId] !== 'connected') {
+                updateContactStatus(contactId, 'pending');
+            }
+            renderContactsList();
+            
+            // Mesajı beklemede olarak göster
+            const pendingText = messageData.type === 'text' ? messageData.content : (messageData.name || 'Dosya');
+            addMessageToHistory(contactId, `⏳ ${pendingText} (beklemede)`, 'Ben', true, messageData.type, messageData.fileData, messageData.mime, true);
+        }
+
+        // Mesaj gönderme (bağlantı varsa direkt, yoksa kuyruğa)
+        function sendMessageWithQueue(contactId, type, content, fileData = null, mime = '', fileName = '') {
+            if (!contactId) {
+                addSystemMessageToActive('Önce bir kişi seçin.');
+                return false;
+            }
+            
+            const isConnectedNow = (activeContactId === contactId && isConnected && currentConnection);
+            
+            if (isConnectedNow) {
+                // Bağlantı varsa direkt gönder
+                try {
+                    if (type === 'text') {
+                        currentConnection.send({ type: 'text', text: content });
+                    } else if (type === 'file') {
+                        currentConnection.send({ type: 'file', name: fileName, data: fileData, mime: mime });
+                    } else if (type === 'image') {
+                        currentConnection.send({ type: 'image', name: fileName, data: fileData, mime: mime });
+                    }
+                    addMessageToHistory(contactId, content || fileName, 'Ben', true, type, fileData, mime);
+                    return true;
+                } catch (err) {
+                    console.error('Gönderim hatası, kuyruğa alınıyor:', err);
+                    queueMessage(contactId, { type, content, fileData, mime, name: fileName });
+                    return false;
+                }
+            } else {
+                // Bağlantı yoksa kuyruğa al
+                queueMessage(contactId, { type, content, fileData, mime, name: fileName });
+                addSystemMessageToActive(`📬 Mesaj beklemeye alındı. ${contactStatus[contactId] === 'pending' ? 'Bağlanınca otomatik gönderilecek.' : 'Bağlanınca iletilecek.'}`);
+                return false;
+            }
+        }
+
         function updateContactStatus(contactId, status) {
             contactStatus[contactId] = status;
             renderContactsList();
         }
 
-        // Aktif bağlantıyı kes
         function disconnectCurrent() {
             if (currentConnection) {
                 const contact = contacts.find(c => c.id === activeContactId);
@@ -680,15 +787,12 @@
             }
         }
 
-        // Kişiye bağlan
         function connectToContact(contactId, peerId, contactName) {
-            // Eğer zaten bu kişiyle bağlıysa, bağlantıyı kes
             if (activeContactId === contactId && isConnected) {
                 disconnectCurrent();
                 return;
             }
             
-            // Başka bir kişiyle bağlıysa, önce onu kes
             if (currentConnection) {
                 disconnectCurrent();
             }
@@ -711,7 +815,6 @@
             currentConnection = newConn;
             setupConnectionEvents(currentConnection, contactId, contactName);
             
-            // 10 saniye timeout
             setTimeout(() => {
                 if (currentConnection === newConn && !isConnected) {
                     updateContactStatus(contactId, 'disconnected');
@@ -732,11 +835,13 @@
                     updateContactStatus(contactId, 'connected');
                     statusDiv.innerHTML = `✅ ${contactName} ile bağlantı aktif`;
                     addSystemMessageToActive(`${contactName} ile görüşmeye hazırsınız.`);
+                    
+                    // Bekleyen mesajları gönder
+                    flushPendingMessages(contactId);
                 }
             });
             
             connection.on('data', (data) => {
-                // SADECE aktif konuşulan kişiden gelen mesajları göster
                 if (activeContactId === contactId && currentConnection === connection) {
                     if (data.type === 'text') {
                         addMessageToHistory(contactId, data.text, contactName, false, 'text');
@@ -770,57 +875,48 @@
 
         function setConnectedState(connected) {
             isConnected = connected;
-            messageInput.disabled = !connected;
-            sendButton.disabled = !connected;
-            if (!connected && activeContactId) {
-                statusDiv.innerHTML = '❌ Bağlantı kesildi';
-                updateContactStatus(activeContactId, 'disconnected');
+            messageInput.disabled = !connected && activeContactId ? false : !connected;
+            sendButton.disabled = !connected && activeContactId ? false : !connected;
+            if (activeContactId && !connected) {
+                messageInput.placeholder = "Mesaj yazın (bağlantı yok, bekleme kuyruğuna alınacak)...";
+            } else if (activeContactId && connected) {
+                messageInput.placeholder = "Mesaj yazın...";
             }
         }
 
         function sendTextMessage() {
-            if (!isConnected || !currentConnection || !activeContactId) {
-                addSystemMessageToActive('Önce bir kişiye bağlanın.');
+            if (!activeContactId) {
+                addSystemMessageToActive('Önce bir kişi seçin.');
                 return;
             }
             const text = messageInput.value.trim();
             if (!text) return;
-            currentConnection.send({ type: 'text', text: text });
-            addMessageToHistory(activeContactId, text, 'Ben', true, 'text');
+            sendMessageWithQueue(activeContactId, 'text', text);
             messageInput.value = '';
             messageInput.focus();
         }
 
         function sendFile(file, type) {
-            if (!isConnected || !currentConnection || !activeContactId) {
-                addSystemMessageToActive('Bağlantı yok, dosya gönderilemez.');
+            if (!activeContactId) {
+                addSystemMessageToActive('Önce bir kişi seçin.');
                 return;
             }
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = e.target.result;
-                const payload = {
-                    type: type,
-                    name: file.name,
-                    data: data,
-                    mime: file.type
-                };
-                currentConnection.send(payload);
-                addMessageToHistory(activeContactId, file.name, 'Ben', true, type, data, file.type);
+                sendMessageWithQueue(activeContactId, type, '', data, file.type, file.name);
             };
             reader.readAsDataURL(file);
         }
 
         function sendEmoji(emoji) {
-            if (!isConnected || !currentConnection || !activeContactId) {
-                addSystemMessageToActive('Önce bir kişiye bağlanın.');
+            if (!activeContactId) {
+                addSystemMessageToActive('Önce bir kişi seçin.');
                 return;
             }
-            currentConnection.send({ type: 'text', text: emoji });
-            addMessageToHistory(activeContactId, emoji, 'Ben', true, 'text');
+            sendMessageWithQueue(activeContactId, 'text', emoji);
         }
 
-        // Veri yönetimi
         function loadContacts() {
             const stored = localStorage.getItem('p2p_contacts_v2');
             contacts = stored ? JSON.parse(stored) : [];
@@ -828,6 +924,7 @@
                 if (contactStatus[c.id] === undefined) {
                     contactStatus[c.id] = 'disconnected';
                 }
+                if (!pendingMessages[c.id]) pendingMessages[c.id] = [];
             });
             renderContactsList();
         }
@@ -839,10 +936,10 @@
         }
         function saveMessagesHistory() { localStorage.setItem('p2p_messages_history_v2', JSON.stringify(messagesHistory)); }
 
-        function addMessageToHistory(contactId, content, sender, isSent, msgType, fileData = null, mime = '') {
+        function addMessageToHistory(contactId, content, sender, isSent, msgType, fileData = null, mime = '', isPending = false) {
             if (!messagesHistory[contactId]) messagesHistory[contactId] = [];
             messagesHistory[contactId].push({
-                content, sender, isSent, msgType, fileData, mime,
+                content, sender, isSent, msgType, fileData, mime, isPending,
                 timestamp: Date.now()
             });
             saveMessagesHistory();
@@ -872,12 +969,14 @@
                 const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 
                 let contentHtml = '';
+                let pendingClass = msg.isPending ? 'pending' : '';
+                
                 if (msg.msgType === 'text') {
-                    contentHtml = `<div class="message-content">${!msg.isSent ? `<strong>${escapeHtml(msg.sender)}:</strong> ` : ''}${escapeHtml(msg.content)}</div>`;
+                    contentHtml = `<div class="message-content ${pendingClass}">${!msg.isSent ? `<strong>${escapeHtml(msg.sender)}:</strong> ` : ''}${escapeHtml(msg.content)}</div>`;
                 } else if (msg.msgType === 'image') {
-                    contentHtml = `<div class="message-content file-message"><img src="${msg.fileData}" class="message-image" onclick="window.open('${msg.fileData}','_blank')" style="max-width:100%; border-radius:12px;"></div>`;
+                    contentHtml = `<div class="message-content file-message ${pendingClass}"><img src="${msg.fileData}" class="message-image" onclick="window.open('${msg.fileData}','_blank')" style="max-width:100%; border-radius:12px;"></div>`;
                 } else if (msg.msgType === 'file') {
-                    contentHtml = `<div class="message-content file-message" onclick="downloadFile('${msg.fileData}', '${msg.content}')">📎 ${escapeHtml(msg.content)}</div>`;
+                    contentHtml = `<div class="message-content file-message ${pendingClass}" onclick="downloadFile('${msg.fileData}', '${msg.content}')">📎 ${escapeHtml(msg.content)}</div>`;
                 }
                 
                 msgDiv.innerHTML = contentHtml + `<div class="message-time">${timeStr}</div>`;
@@ -902,15 +1001,16 @@
             contacts.forEach(contact => {
                 const status = contactStatus[contact.id] || 'disconnected';
                 let statusClass = 'disconnected';
-                let statusText = '';
                 if (status === 'connected') statusClass = 'connected';
                 else if (status === 'connecting') statusClass = 'passive';
+                else if (status === 'pending') statusClass = 'pending';
                 else statusClass = 'disconnected';
                 
                 const isActive = (activeContactId === contact.id);
                 const isConnecting = (status === 'connecting');
                 const buttonText = (status === 'connected') ? 'Bağlandı' : (status === 'connecting') ? 'Bağlanıyor...' : 'Bağlan';
                 const buttonClass = (status === 'connected') ? 'disconnecting' : '';
+                const pendingCount = pendingMessages[contact.id] ? pendingMessages[contact.id].length : 0;
                 
                 const div = document.createElement('div');
                 div.className = `contact-item ${isActive ? 'active-contact' : ''}`;
@@ -918,7 +1018,10 @@
                     <div class="contact-info">
                         <div class="status-light ${statusClass}"></div>
                         <div>
-                            <div class="contact-name">${escapeHtml(contact.name)}</div>
+                            <div class="contact-name">
+                                ${escapeHtml(contact.name)}
+                                ${pendingCount > 0 ? `<span class="pending-badge">📬 ${pendingCount}</span>` : ''}
+                            </div>
                             <div class="contact-peerid">${escapeHtml(contact.peerId.substring(0, 14))}...</div>
                         </div>
                     </div>
@@ -940,13 +1043,9 @@
                         const currentStatus = contactStatus[id];
                         
                         if (currentStatus === 'connected') {
-                            // Bağlantıyı kes
-                            if (activeContactId === id) {
-                                disconnectCurrent();
-                            }
+                            disconnectCurrent();
                             updateContactStatus(id, 'disconnected');
                         } else {
-                            // Bağlan
                             connectToContact(id, peerId, name);
                         }
                     };
@@ -963,8 +1062,7 @@
         }
 
         function deleteContactById(id) {
-            if (confirm('Kişiyi silmek mesaj geçmişini de siler. Devam?')) {
-                // Eğer silinen kişi aktifse bağlantıyı kes
+            if (confirm('Kişiyi silmek mesaj geçmişini ve bekleyen mesajları da siler. Devam?')) {
                 if (activeContactId === id) {
                     if (currentConnection) {
                         currentConnection.close();
@@ -979,6 +1077,7 @@
                 }
                 contacts = contacts.filter(c => c.id !== id);
                 delete contactStatus[id];
+                delete pendingMessages[id];
                 if (messagesHistory[id]) delete messagesHistory[id];
                 saveContacts();
                 saveMessagesHistory();
@@ -991,11 +1090,13 @@
                 alert('Önce bir kişi seçin.');
                 return;
             }
-            if (confirm('Bu kişiyle olan tüm mesajlaşma geçmişi silinecek. Devam et?')) {
+            if (confirm('Bu kişiyle olan tüm mesajlaşma geçmişi silinecek. Bekleyen mesajlar da silinecek. Devam et?')) {
                 messagesHistory[activeContactId] = [];
+                pendingMessages[activeContactId] = [];
                 saveMessagesHistory();
                 renderMessagesForActiveContact();
-                addSystemMessageToActive('Mesaj geçmişi temizlendi.');
+                updateContactStatus(activeContactId, 'disconnected');
+                addSystemMessageToActive('Mesaj geçmişi ve bekleyen mesajlar temizlendi.');
             }
         }
 
@@ -1027,13 +1128,11 @@
                 return; 
             }
             
-            // Eğer zaten aktif bir bağlantı varsa, yeni geleni reddet
             if (currentConnection && isConnected) {
                 incomingConn.close();
                 return;
             }
             
-            // Mevcut bağlantıyı kapat (varsa)
             if (currentConnection) {
                 currentConnection.close();
             }
@@ -1049,10 +1148,12 @@
             setConnectedState(true);
             statusDiv.innerHTML = `✅ ${contact.name} ile bağlantı aktif`;
             addSystemMessageToActive(`${contact.name} sizinle bağlantı kurdu.`);
+            
+            // Bekleyen mesajları gönder
+            flushPendingMessages(contact.id);
             renderContactsList();
         }
 
-        // Emoji seçici
         function toggleEmojiPicker() {
             if (emojiPicker) { emojiPicker.remove(); emojiPicker = null; return; }
             emojiPicker = document.createElement('div');
@@ -1087,7 +1188,6 @@
             input.click();
         }
 
-        // Eventler
         addContactBtn.onclick = () => { modal.style.display = 'flex'; };
         clearMessagesBtn.onclick = clearMessagesOnly;
         modalCancelBtn.onclick = () => { modal.style.display = 'none'; };
@@ -1099,23 +1199,24 @@
             const newId = Date.now().toString() + '_' + Math.random().toString(36);
             contacts.push({ id: newId, name, peerId });
             contactStatus[newId] = 'disconnected';
+            pendingMessages[newId] = [];
             saveContacts();
             renderContactsList();
             modal.style.display = 'none';
         };
         sendButton.onclick = sendTextMessage;
         copyIdBtn.onclick = () => { navigator.clipboard.writeText(myPermanentId); copyIdBtn.textContent = '✅'; setTimeout(() => copyIdBtn.textContent = '📋 Kopyala', 1500); };
-        messageInput.onkeypress = (e) => { if (e.key === 'Enter' && isConnected) sendTextMessage(); };
+        messageInput.onkeypress = (e) => { if (e.key === 'Enter' && activeContactId) sendTextMessage(); };
         emojiBtn.onclick = toggleEmojiPicker;
         fileBtn.onclick = () => selectFile('file');
         imageBtn.onclick = () => selectFile('image');
         window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiBtn) { emojiPicker.remove(); emojiPicker = null; } };
 
-        // Başlat
         loadContacts();
         loadMessagesHistory();
         initPeerWithPermanentId();
         renderMessagesForActiveContact();
+        setConnectedState(false);
     </script>
 </body>
 </html>
