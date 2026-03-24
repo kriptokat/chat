@@ -2,162 +2,312 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>P2P Anlık Mesajlaşma</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Mobil tıklama efekti kaldır */
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 100vh;
+            height: 100dvh; /* Dinamik viewport (mobil tarayıcı çubukları için) */
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
         }
 
+        /* Tam ekran, çerçevesiz konteyner */
         .chat-container {
-            width: 90%;
-            max-width: 900px;
-            height: 85vh;
+            width: 100%;
+            height: 100%;
+            max-width: none;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            border-radius: 0; /* Telefonda hiçbir çerçeve/radius olmasın */
+            box-shadow: none;
         }
 
+        /* Header - daha kompakt mobil uyum */
         .chat-header {
             background: #4a90e2;
             color: white;
-            padding: 15px 20px;
+            padding: 14px 16px;
             text-align: center;
+            flex-shrink: 0;
+        }
+
+        .chat-header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
         }
 
         .connection-status {
-            font-size: 0.8rem;
-            margin-top: 5px;
-            color: #e0e0e0;
+            font-size: 0.7rem;
+            margin-top: 6px;
+            color: #f0f0f0;
+            font-weight: 500;
         }
 
+        /* Bağlantı paneli - mobilde rahat dokunma */
         .connection-panel {
-            padding: 15px;
-            background: #f9f9f9;
-            border-bottom: 1px solid #eee;
+            padding: 12px 16px;
+            background: #f8f9fc;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .peer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .peer-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #4a5568;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .peer-id {
+            font-family: 'SF Mono', 'Roboto Mono', monospace;
+            font-size: 0.75rem;
+            background: #ffffff;
+            padding: 8px 12px;
+            border-radius: 12px;
+            word-break: break-all;
+            border: 1px solid #e2e8f0;
+            color: #2d3748;
+        }
+
+        .connect-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .connect-row {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
+            align-items: center;
         }
 
-        .connection-panel input {
+        .connect-row input {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e0;
+            border-radius: 30px;
             font-size: 0.9rem;
+            background: white;
+            font-family: monospace;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
         }
 
-        .connection-panel button {
-            padding: 10px 20px;
+        .connect-row input:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .connect-row button {
+            padding: 12px 20px;
             background: #4a90e2;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: background 0.2s, transform 0.05s;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
-        .connection-panel button:hover {
+        .connect-row button:active {
+            transform: scale(0.97);
             background: #357abd;
         }
 
+        /* Mesaj alanı - esnek scroll */
         .messages-area {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 16px 12px;
+            background: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            -webkit-overflow-scrolling: touch; /* iOS yumuşak scroll */
         }
 
         .message {
-            margin-bottom: 15px;
             display: flex;
             flex-direction: column;
+            max-width: 85%;
         }
 
         .message.sent {
+            align-self: flex-end;
             align-items: flex-end;
         }
 
         .message.received {
+            align-self: flex-start;
             align-items: flex-start;
         }
 
         .message-content {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 15px;
+            padding: 10px 14px;
+            border-radius: 20px;
             word-wrap: break-word;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.05);
         }
 
         .sent .message-content {
             background: #4a90e2;
             color: white;
+            border-bottom-right-radius: 4px;
         }
 
         .received .message-content {
             background: white;
-            color: #333;
-            border: 1px solid #ddd;
+            color: #1e293b;
+            border: 0.5px solid #e2e8f0;
+            border-bottom-left-radius: 4px;
         }
 
         .message-time {
-            font-size: 0.7rem;
-            color: #999;
-            margin-top: 5px;
+            font-size: 0.65rem;
+            color: #64748b;
+            margin-top: 4px;
+            margin-left: 8px;
+            margin-right: 8px;
         }
 
+        /* Giriş alanı - mobil klavye dostu */
         .input-area {
-            padding: 20px;
+            padding: 12px 16px;
             background: white;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #edf2f7;
             display: flex;
             gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+            backdrop-filter: blur(0);
         }
 
         #messageInput {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
+            padding: 12px 18px;
+            border: 1px solid #cbd5e1;
+            border-radius: 30px;
             outline: none;
             font-size: 1rem;
+            font-family: inherit;
+            background: #ffffff;
+            transition: border 0.2s;
+        }
+
+        #messageInput:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74,144,226,0.2);
         }
 
         #sendButton {
-            padding: 12px 25px;
+            padding: 12px 20px;
             background: #4a90e2;
             color: white;
             border: none;
-            border-radius: 25px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.95rem;
             cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        #sendButton:active {
+            transform: scale(0.96);
         }
 
         #sendButton:disabled {
-            background: #ccc;
+            background: #b9c8f0;
+            opacity: 0.7;
+            transform: none;
             cursor: not-allowed;
         }
 
-        .peer-id {
-            font-family: monospace;
-            font-size: 0.8rem;
-            background: #f0f0f0;
-            padding: 5px;
-            border-radius: 3px;
-            word-break: break-all;
+        /* Durum mesajları için renk */
+        .status-message {
+            font-style: italic;
+            background: #eef2ff;
+            color: #334155;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            text-align: center;
+            max-width: 90%;
+            align-self: center;
+        }
+
+        /* Telefonda kaydırma çubuğu ince ama kullanışlı */
+        .messages-area::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages-area::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+
+        /* Buton ve input dokunma alanı rahat */
+        button, input {
+            touch-action: manipulation;
+        }
+
+        /* Çok küçük ekranlarda padding azalt */
+        @media (max-width: 480px) {
+            .connection-panel {
+                padding: 10px 14px;
+            }
+            .connect-row input {
+                padding: 10px 12px;
+            }
+            .connect-row button {
+                padding: 10px 16px;
+            }
+            .message-content {
+                font-size: 0.9rem;
+            }
+            .chat-header h1 {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
@@ -169,163 +319,347 @@
         </div>
         
         <div class="connection-panel">
-            <div style="flex: 1;">
-                <div style="font-size: 0.8rem; margin-bottom: 5px;">🔑 Sizin ID'niz:</div>
+            <div class="peer-info">
+                <div class="peer-label">🔑 SİZİN ID'NİZ</div>
                 <div class="peer-id" id="myPeerId">Bağlanıyor...</div>
             </div>
-            <div style="flex: 1;">
-                <div style="font-size: 0.8rem; margin-bottom: 5px;">👤 Karşı tarafın ID'si:</div>
-                <input type="text" id="remotePeerId" placeholder="Karşı tarafın ID'sini yapıştırın">
-                <button id="connectBtn">Bağlan</button>
+            <div class="connect-area">
+                <div class="peer-label">👤 KARŞI TARAFIN ID'Sİ</div>
+                <div class="connect-row">
+                    <input type="text" id="remotePeerId" placeholder="Örneğin: 9b1deb4d-3b7d..." autocomplete="off">
+                    <button id="connectBtn">Bağlan</button>
+                </div>
             </div>
         </div>
 
-        <div class="messages-area" id="messagesArea"></div>
+        <div class="messages-area" id="messagesArea">
+            <!-- Sistem mesajları ve sohbet buraya dinamik gelir -->
+        </div>
 
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." disabled>
+            <input type="text" id="messageInput" placeholder="Mesaj yaz..." disabled>
             <button id="sendButton" disabled>Gönder</button>
         </div>
     </div>
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
-        let peer;
-        let conn;
-        let isConnected = false;
+        (function(){
+            let peer;
+            let conn = null;
+            let isConnected = false;
+            let connectionAttempt = false;
 
-        const messagesArea = document.getElementById('messagesArea');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const statusDiv = document.getElementById('status');
-        const myPeerIdDiv = document.getElementById('myPeerId');
-        const remotePeerIdInput = document.getElementById('remotePeerId');
-        const connectBtn = document.getElementById('connectBtn');
+            const messagesArea = document.getElementById('messagesArea');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const statusDiv = document.getElementById('status');
+            const myPeerIdDiv = document.getElementById('myPeerId');
+            const remotePeerIdInput = document.getElementById('remotePeerId');
+            const connectBtn = document.getElementById('connectBtn');
 
-        function addMessage(text, sender, isSent) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-            
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            
-            messageDiv.innerHTML = `
-                <div class="message-content">
-                    <strong>${sender}:</strong> ${text}
-                </div>
-                <div class="message-time">${time}</div>
-            `;
-            
-            messagesArea.appendChild(messageDiv);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }
-
-        function setConnected(connected) {
-            isConnected = connected;
-            messageInput.disabled = !connected;
-            sendButton.disabled = !connected;
-            
-            if (connected) {
-                statusDiv.innerHTML = '✅ Bağlantı kuruldu! Mesajlaşabilirsiniz.';
-                statusDiv.style.color = '#90EE90';
-            } else {
-                statusDiv.innerHTML = '❌ Bağlantı kesildi. Yeniden bağlanın.';
-                statusDiv.style.color = '#FFB6C1';
+            // Yardımcı: sistem mesajı (örneğin bağlantı durumu)
+            function addSystemMessage(text) {
+                const sysDiv = document.createElement('div');
+                sysDiv.className = 'message received'; // hizalama için
+                sysDiv.style.maxWidth = '90%';
+                sysDiv.style.alignSelf = 'center';
+                sysDiv.style.marginBottom = '6px';
+                sysDiv.innerHTML = `
+                    <div class="message-content" style="background:#eef2ff; color:#334155; text-align:center; font-size:0.75rem; padding:6px 12px;">
+                        📡 ${text}
+                    </div>
+                `;
+                messagesArea.appendChild(sysDiv);
+                messagesArea.scrollTop = messagesArea.scrollHeight;
             }
-        }
 
-        // PeerJS başlat
-        peer = new Peer();
-
-        peer.on('open', (id) => {
-            myPeerIdDiv.textContent = id;
-            statusDiv.innerHTML = '✅ Hazır! Karşı tarafın ID\'sini girip bağlanın.';
-            statusDiv.style.color = '#90EE90';
-        });
-
-        // Gelen bağlantıyı kabul et
-        peer.on('connection', (connection) => {
-            if (conn) {
-                connection.close();
-                return;
-            }
-            
-            conn = connection;
-            setupConnection(conn);
-            addMessage('Karşı taraf size bağlandı!', 'Sistem', false);
-            setConnected(true);
-        });
-
-        function setupConnection(connection) {
-            connection.on('open', () => {
-                setConnected(true);
-            });
-            
-            connection.on('data', (data) => {
-                addMessage(data.text, data.sender, false);
-            });
-            
-            connection.on('close', () => {
-                setConnected(false);
-                addMessage('Bağlantı kesildi!', 'Sistem', false);
-                conn = null;
-            });
-            
-            connection.on('error', (err) => {
-                console.error('Bağlantı hatası:', err);
-                setConnected(false);
-            });
-        }
-
-        // Bağlan butonu
-        connectBtn.addEventListener('click', () => {
-            const remoteId = remotePeerIdInput.value.trim();
-            if (!remoteId) {
-                alert('Lütfen karşı tarafın ID\'sini girin!');
-                return;
-            }
-            
-            if (conn) {
-                conn.close();
-            }
-            
-            statusDiv.innerHTML = '🔄 Bağlanılıyor...';
-            conn = peer.connect(remoteId);
-            setupConnection(conn);
-            
-            // Bağlantı hatası durumunda
-            setTimeout(() => {
-                if (!isConnected) {
-                    statusDiv.innerHTML = '❌ Bağlantı başarısız! ID\'yi kontrol edin.';
-                    statusDiv.style.color = '#FFB6C1';
+            // Normal mesaj ekleme (kullanıcı mesajları)
+            function addMessage(text, sender, isSent) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+                
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const displayName = isSent ? 'Ben' : (sender === 'Sistem' ? 'Sistem' : 'Karşı Taraf');
+                
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        ${!isSent && sender !== 'Sistem' ? `<strong>${displayName}:</strong> ` : ''}
+                        ${text}
+                    </div>
+                    <div class="message-time">${time}</div>
+                `;
+                
+                // Sistem mesajları için farklı bir stil ama yine de received gibi göster
+                if (sender === 'Sistem') {
+                    messageDiv.querySelector('.message-content').style.background = '#e2e8f0';
+                    messageDiv.querySelector('.message-content').style.color = '#1e293b';
+                    messageDiv.querySelector('.message-content').style.fontStyle = 'italic';
+                    messageDiv.style.alignSelf = 'center';
+                    messageDiv.style.maxWidth = '85%';
                 }
-            }, 5000);
-        });
+                
+                messagesArea.appendChild(messageDiv);
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }
 
-        // Mesaj gönder
-        function sendMessage() {
-            if (!isConnected || !conn) {
-                alert('Bağlantı yok!');
-                return;
+            // Bağlantı durumunu güncelle (UI butonlar, status yazısı)
+            function setConnected(connected, customMessage = null) {
+                isConnected = connected;
+                messageInput.disabled = !connected;
+                sendButton.disabled = !connected;
+                
+                if (connected) {
+                    statusDiv.innerHTML = customMessage || '✅ Bağlantı kuruldu! Mesajlaşabilirsiniz.';
+                    statusDiv.style.color = '#d1fae5';
+                } else {
+                    if (!customMessage) {
+                        statusDiv.innerHTML = '❌ Bağlantı kesildi. Yeniden bağlanın.';
+                    } else {
+                        statusDiv.innerHTML = customMessage;
+                    }
+                    statusDiv.style.color = '#fed7d7';
+                }
+            }
+
+            // Bağlantıyı temizleme
+            function cleanupConnection() {
+                if (conn) {
+                    try {
+                        conn.close();
+                    } catch(e) { /* ignore */ }
+                    conn = null;
+                }
+                isConnected = false;
+                setConnected(false);
+            }
+
+            // Gelen veri işleme
+            function setupConnection(connection) {
+                if (!connection) return;
+                
+                connection.on('open', () => {
+                    isConnected = true;
+                    setConnected(true, '✅ Bağlantı kuruldu! Mesajlaşabilirsiniz.');
+                    addSystemMessage('Güvenli P2P bağlantısı aktif.');
+                });
+                
+                connection.on('data', (data) => {
+                    if (data && typeof data === 'object' && data.text) {
+                        // Karşı taraftan gelen mesaj
+                        addMessage(data.text, data.sender || 'Karşı Taraf', false);
+                    } else if (typeof data === 'string') {
+                        // fallback: düz metin olarak da destek
+                        addMessage(data, 'Karşı Taraf', false);
+                    }
+                });
+                
+                connection.on('close', () => {
+                    if (conn === connection) {
+                        addSystemMessage('🔌 Karşı taraf bağlantıyı kapattı.');
+                        cleanupConnection();
+                    }
+                });
+                
+                connection.on('error', (err) => {
+                    console.warn('Bağlantı hatası:', err);
+                    if (conn === connection) {
+                        addSystemMessage('⚠️ Bağlantı hatası oluştu.');
+                        cleanupConnection();
+                    }
+                });
+            }
+
+            // Bağlantı başlat (karşı tarafın idsi ile)
+            function initiateConnection(remoteId) {
+                if (!remoteId) {
+                    addSystemMessage('Lütfen geçerli bir ID girin.');
+                    return false;
+                }
+                
+                // Eğer zaten bağlıysak önce kapat
+                if (conn) {
+                    cleanupConnection();
+                }
+                
+                statusDiv.innerHTML = '🔄 Bağlanılıyor...';
+                statusDiv.style.color = '#fef9c3';
+                addSystemMessage(`🔗 ${remoteId.substring(0,8)}... ID'sine bağlanma isteği gönderildi.`);
+                
+                try {
+                    const newConn = peer.connect(remoteId);
+                    if (!newConn) {
+                        throw new Error('Bağlantı nesnesi oluşturulamadı');
+                    }
+                    conn = newConn;
+                    setupConnection(conn);
+                    
+                    // 7 saniye içinde bağlantı kurulmazsa hata göster
+                    setTimeout(() => {
+                        if (conn && !isConnected && conn.open === false) {
+                            addSystemMessage('⏰ Bağlantı zaman aşımı. ID geçerli mi ve karşı taraf çevrimiçi mi?');
+                            statusDiv.innerHTML = '❌ Zaman aşımı, bağlantı başarısız.';
+                            statusDiv.style.color = '#FFB6C1';
+                            cleanupConnection();
+                        } else if (!conn) {
+                            statusDiv.innerHTML = '❌ Bağlantı başarısız.';
+                            statusDiv.style.color = '#FFB6C1';
+                        }
+                    }, 8000);
+                    
+                    return true;
+                } catch (err) {
+                    console.error(err);
+                    addSystemMessage(`Bağlantı hatası: ${err.message}`);
+                    statusDiv.innerHTML = '❌ Bağlantı kurulamadı.';
+                    statusDiv.style.color = '#FFB6C1';
+                    return false;
+                }
+            }
+
+            // PeerJS başlatma ve eventler
+            function initPeer() {
+                // Peer opsiyonları: daha kararlı bağlantı için opsiyonel yapılandırma
+                peer = new Peer({
+                    debug: 0,
+                    config: {'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]}
+                });
+                
+                peer.on('open', (id) => {
+                    myPeerIdDiv.textContent = id;
+                    statusDiv.innerHTML = '✅ Hazır! Karşı taraf ID\'sini girip bağlanın.';
+                    statusDiv.style.color = '#d1fae5';
+                    addSystemMessage(`✨ ID'niz oluşturuldu. Paylaşarak bağlantı kurabilirsiniz.`);
+                });
+                
+                // Gelen bağlantı isteklerini dinle
+                peer.on('connection', (incomingConn) => {
+                    // Eğer halihazırda bir bağlantı varsa, yeni bağlantıyı reddet ya da mevcutu değiştir
+                    if (conn && isConnected) {
+                        addSystemMessage('⚠️ Zaten aktif bağlantı var. Gelen istek reddedildi.');
+                        incomingConn.close();
+                        return;
+                    }
+                    
+                    // Önceki bağlantı varsa temizle
+                    if (conn) cleanupConnection();
+                    
+                    conn = incomingConn;
+                    addSystemMessage('📞 Karşı taraf size bağlanmak istedi. Bağlantı kabul edildi.');
+                    setupConnection(conn);
+                    // Bağlantı kurulunca setConnected, connection.open event'inde tetiklenecek
+                });
+                
+                peer.on('error', (err) => {
+                    console.warn('PeerJS hatası:', err);
+                    if (err.type === 'unavailable-id' || err.type === 'peer-unavailable') {
+                        addSystemMessage(`Hata: ${err.message || 'ID geçersiz veya kullanılamıyor.'}`);
+                        statusDiv.innerHTML = '❌ ID hatası, yeniden deneyin.';
+                        statusDiv.style.color = '#FFB6C1';
+                    } else if (err.type === 'network') {
+                        addSystemMessage('🌐 Ağ hatası, internet bağlantınızı kontrol edin.');
+                    } else {
+                        addSystemMessage(`Peer hatası: ${err.message || 'Bağlantı sorunu'}`);
+                    }
+                    // Bağlantı varsa temizle ama peer'i kapatma yeniden başlatmaya gerek yok
+                    if (conn) cleanupConnection();
+                });
+                
+                peer.on('disconnected', () => {
+                    // Peer sunucuyla bağlantı koptuysa, tekrar bağlanmaya çalış
+                    addSystemMessage('⚠️ Peer sunucusu ile bağlantı kesildi, yeniden bağlanılıyor...');
+                    statusDiv.innerHTML = '🔄 Sunucu bağlantısı yenileniyor...';
+                    if (peer && !peer.destroyed) {
+                        peer.reconnect();
+                    }
+                });
             }
             
-            const message = messageInput.value.trim();
-            if (message) {
-                const data = {
+            // Mesaj gönderme
+            function sendMessage() {
+                if (!isConnected || !conn) {
+                    addSystemMessage('Mesaj göndermek için bağlı değilsiniz.');
+                    return;
+                }
+                
+                const message = messageInput.value.trim();
+                if (message === "") return;
+                
+                // Veriyi gönder (nesne olarak)
+                const payload = {
                     text: message,
-                    sender: 'Ben'
+                    sender: 'Ben',
+                    timestamp: Date.now()
                 };
-                conn.send(data);
-                addMessage(message, 'Ben', true);
-                messageInput.value = '';
+                
+                try {
+                    conn.send(payload);
+                    addMessage(message, 'Ben', true);
+                    messageInput.value = '';
+                    // Input'a odaklanma (mobilde klavye kapanmasın)
+                    messageInput.focus();
+                } catch (err) {
+                    console.error('Gönderim hatası:', err);
+                    addSystemMessage('Mesaj gönderilemedi, bağlantı kopmuş olabilir.');
+                    cleanupConnection();
+                }
             }
-        }
-
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
+            
+            // Event listener'lar
+            connectBtn.addEventListener('click', () => {
+                const remoteId = remotePeerIdInput.value.trim();
+                if (!remoteId) {
+                    addSystemMessage('Lütfen karşı tarafın ID\'sini girin.');
+                    // mobilde kısa titreşim efekti gibi görsel feedback
+                    remotePeerIdInput.style.borderColor = '#f56565';
+                    setTimeout(() => { remotePeerIdInput.style.borderColor = '#cbd5e0'; }, 800);
+                    return;
+                }
+                remotePeerIdInput.style.borderColor = '#cbd5e0';
+                
+                // Eğer bağlantı zaten varsa, kullanıcıya sor ve yeniden bağlan
+                if (conn && isConnected) {
+                    if (confirm('Zaten aktif bir bağlantı var. Yeni bağlantı kurmak mevcut bağlantıyı sonlandırır. Devam et?')) {
+                        cleanupConnection();
+                        initiateConnection(remoteId);
+                    }
+                } else {
+                    initiateConnection(remoteId);
+                }
+            });
+            
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (isConnected && sendButton.disabled === false) {
+                        sendMessage();
+                    }
+                }
+            });
+            
+            // Mobilde input alanını daha iyi deneyim için klavye açıldığında mesaj alanına scroll
+            let originalHeight = window.innerHeight;
+            window.addEventListener('resize', () => {
+                if (messagesArea) {
+                    setTimeout(() => {
+                        messagesArea.scrollTop = messagesArea.scrollHeight;
+                    }, 100);
+                }
+            });
+            
+            // Sayfa yüklendiğinde peer başlat
+            initPeer();
+            
+            // Sayfa kapanırken bağlantıları temizle (opsiyonel)
+            window.addEventListener('beforeunload', () => {
+                if (conn) conn.close();
+                if (peer && !peer.destroyed) peer.destroy();
+            });
+        })();
     </script>
 </body>
 </html>
