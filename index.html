@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Anlık Mesajlaşma</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #4a90e2;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        .connection-status {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: #e0e0e0;
+        }
+
+        .connection-panel {
+            padding: 15px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .connection-panel input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .connection-panel button {
+            padding: 10px 20px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .connection-panel button:hover {
+            background: #357abd;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            align-items: flex-end;
+        }
+
+        .message.received {
+            align-items: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .sent .message-content {
+            background: #4a90e2;
+            color: white;
+        }
+
+        .received .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        #sendButton {
+            padding: 12px 25px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        #sendButton:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .peer-id {
+            font-family: monospace;
+            font-size: 0.8rem;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🔒 P2P Anlık Mesajlaşma</h1>
+            <div class="connection-status" id="status">Bağlantı bekleniyor...</div>
+        </div>
+        
+        <div class="connection-panel">
+            <div style="flex: 1;">
+                <div style="font-size: 0.8rem; margin-bottom: 5px;">🔑 Sizin ID'niz:</div>
+                <div class="peer-id" id="myPeerId">Bağlanıyor...</div>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 0.8rem; margin-bottom: 5px;">👤 Karşı tarafın ID'si:</div>
+                <input type="text" id="remotePeerId" placeholder="Karşı tarafın ID'sini yapıştırın">
+                <button id="connectBtn">Bağlan</button>
+            </div>
+        </div>
+
+        <div class="messages-area" id="messagesArea"></div>
+
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." disabled>
+            <button id="sendButton" disabled>Gönder</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script>
+        let peer;
+        let conn;
+        let isConnected = false;
+
+        const messagesArea = document.getElementById('messagesArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const statusDiv = document.getElementById('status');
+        const myPeerIdDiv = document.getElementById('myPeerId');
+        const remotePeerIdInput = document.getElementById('remotePeerId');
+        const connectBtn = document.getElementById('connectBtn');
+
+        function addMessage(text, sender, isSent) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <strong>${sender}:</strong> ${text}
+                </div>
+                <div class="message-time">${time}</div>
+            `;
+            
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function setConnected(connected) {
+            isConnected = connected;
+            messageInput.disabled = !connected;
+            sendButton.disabled = !connected;
+            
+            if (connected) {
+                statusDiv.innerHTML = '✅ Bağlantı kuruldu! Mesajlaşabilirsiniz.';
+                statusDiv.style.color = '#90EE90';
+            } else {
+                statusDiv.innerHTML = '❌ Bağlantı kesildi. Yeniden bağlanın.';
+                statusDiv.style.color = '#FFB6C1';
+            }
+        }
+
+        // PeerJS başlat
+        peer = new Peer();
+
+        peer.on('open', (id) => {
+            myPeerIdDiv.textContent = id;
+            statusDiv.innerHTML = '✅ Hazır! Karşı tarafın ID\'sini girip bağlanın.';
+            statusDiv.style.color = '#90EE90';
+        });
+
+        // Gelen bağlantıyı kabul et
+        peer.on('connection', (connection) => {
+            if (conn) {
+                connection.close();
+                return;
+            }
+            
+            conn = connection;
+            setupConnection(conn);
+            addMessage('Karşı taraf size bağlandı!', 'Sistem', false);
+            setConnected(true);
+        });
+
+        function setupConnection(connection) {
+            connection.on('open', () => {
+                setConnected(true);
+            });
+            
+            connection.on('data', (data) => {
+                addMessage(data.text, data.sender, false);
+            });
+            
+            connection.on('close', () => {
+                setConnected(false);
+                addMessage('Bağlantı kesildi!', 'Sistem', false);
+                conn = null;
+            });
+            
+            connection.on('error', (err) => {
+                console.error('Bağlantı hatası:', err);
+                setConnected(false);
+            });
+        }
+
+        // Bağlan butonu
+        connectBtn.addEventListener('click', () => {
+            const remoteId = remotePeerIdInput.value.trim();
+            if (!remoteId) {
+                alert('Lütfen karşı tarafın ID\'sini girin!');
+                return;
+            }
+            
+            if (conn) {
+                conn.close();
+            }
+            
+            statusDiv.innerHTML = '🔄 Bağlanılıyor...';
+            conn = peer.connect(remoteId);
+            setupConnection(conn);
+            
+            // Bağlantı hatası durumunda
+            setTimeout(() => {
+                if (!isConnected) {
+                    statusDiv.innerHTML = '❌ Bağlantı başarısız! ID\'yi kontrol edin.';
+                    statusDiv.style.color = '#FFB6C1';
+                }
+            }, 5000);
+        });
+
+        // Mesaj gönder
+        function sendMessage() {
+            if (!isConnected || !conn) {
+                alert('Bağlantı yok!');
+                return;
+            }
+            
+            const message = messageInput.value.trim();
+            if (message) {
+                const data = {
+                    text: message,
+                    sender: 'Ben'
+                };
+                conn.send(data);
+                addMessage(message, 'Ben', true);
+                messageInput.value = '';
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
