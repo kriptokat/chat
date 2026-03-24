@@ -78,14 +78,14 @@
         .chat-header {
             background: #4a90e2;
             color: white;
-            padding: 8px 16px;
+            padding: 6px 16px;
             text-align: center;
             flex-shrink: 0;
         }
 
         .connection-status {
             font-size: 0.65rem;
-            margin-top: 3px;
+            margin-top: 2px;
             color: #f0f0f0;
         }
 
@@ -97,7 +97,7 @@
         }
 
         .my-info {
-            padding: 8px 12px;
+            padding: 6px 12px;
             background: #ffffff;
             border-bottom: 1px solid #eef2f6;
             display: flex;
@@ -112,30 +112,29 @@
         }
 
         .my-id-label {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             font-weight: 600;
             color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .my-id-value {
             font-family: monospace;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             background: #f1f5f9;
-            padding: 5px 8px;
-            border-radius: 8px;
+            padding: 4px 6px;
+            border-radius: 6px;
             word-break: break-all;
-            margin-top: 3px;
+            margin-top: 2px;
             color: #1e293b;
         }
 
         .copy-id-btn {
             background: #e2e8f0;
             border: none;
-            padding: 6px 12px;
-            border-radius: 25px;
-            font-size: 0.7rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
             font-weight: 500;
             color: #334155;
             cursor: pointer;
@@ -148,7 +147,7 @@
         }
 
         .contacts-header {
-            padding: 10px 12px 6px 12px;
+            padding: 8px 12px 4px 12px;
             display: flex;
             justify-content: space-between;
             align-items: baseline;
@@ -157,21 +156,21 @@
         .contacts-title {
             font-weight: 600;
             color: #1e293b;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         .action-buttons {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
 
         .add-contact-btn, .clear-messages-btn {
             background: #4a90e2;
             color: white;
             border: none;
-            padding: 5px 12px;
-            border-radius: 18px;
-            font-size: 0.65rem;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.6rem;
             font-weight: 500;
             cursor: pointer;
         }
@@ -180,32 +179,26 @@
             background: #f59e0b;
         }
 
-        .clear-messages-btn:active {
-            background: #d97706;
-            transform: scale(0.96);
-        }
-
-        .add-contact-btn:active {
+        .clear-messages-btn:active, .add-contact-btn:active {
             transform: scale(0.96);
         }
 
         .contacts-list {
-            max-height: 130px;
+            max-height: 115px;
             overflow-y: auto;
-            padding: 0 10px 8px 10px;
+            padding: 0 10px 6px 10px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .contact-item {
             background: white;
-            border-radius: 12px;
-            padding: 6px 10px;
+            border-radius: 10px;
+            padding: 5px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
         }
 
@@ -216,54 +209,41 @@
 
         .contact-name {
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #0f172a;
-            word-break: break-word;
         }
 
         .contact-peerid {
             font-family: monospace;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: #64748b;
-            margin-top: 2px;
-            word-break: break-all;
+            margin-top: 1px;
         }
 
         .contact-actions {
             display: flex;
-            gap: 6px;
-            margin-left: 8px;
+            gap: 5px;
+            margin-left: 6px;
         }
 
         .contact-actions button {
             background: none;
             border: none;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 18px;
-            font-weight: 500;
+            padding: 3px 6px;
+            border-radius: 14px;
         }
 
         .connect-contact-btn {
             background: #e6f7e6;
             color: #2e7d32;
-            font-size: 0.65rem;
-            padding: 4px 10px;
-        }
-
-        .connect-contact-btn:active {
-            background: #c8e6c9;
+            font-size: 0.6rem;
+            padding: 3px 8px;
         }
 
         .delete-contact-btn {
             color: #ef4444;
-            font-size: 0.9rem;
-            padding: 4px 6px;
-        }
-
-        .delete-contact-btn:active {
-            background: #fee2e2;
         }
 
         /* Modal */
@@ -278,43 +258,40 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            backdrop-filter: blur(3px);
         }
 
         .modal-content {
             background: white;
             width: 85%;
-            max-width: 320px;
-            border-radius: 28px;
-            padding: 20px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            max-width: 300px;
+            border-radius: 24px;
+            padding: 18px;
         }
 
         .modal-content h3 {
-            font-size: 1.2rem;
-            margin-bottom: 16px;
-            color: #0f172a;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
         }
 
         .modal-content input {
             width: 100%;
-            padding: 12px 14px;
-            margin: 8px 0;
+            padding: 10px 12px;
+            margin: 6px 0;
             border: 1px solid #cbd5e1;
-            border-radius: 24px;
-            font-size: 0.9rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
         }
 
         .modal-buttons {
             display: flex;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 14px;
         }
 
         .modal-buttons button {
             flex: 1;
-            padding: 10px;
-            border-radius: 30px;
+            padding: 8px;
+            border-radius: 25px;
             border: none;
             font-weight: 500;
             cursor: pointer;
@@ -332,40 +309,43 @@
 
         /* Emoji seçici */
         .emoji-picker {
-            position: absolute;
-            bottom: 70px;
+            position: fixed;
+            bottom: 85px;
             left: 10px;
+            right: 10px;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            padding: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            padding: 12px;
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(8, 1fr);
             gap: 8px;
-            z-index: 100;
-            max-width: 280px;
+            z-index: 1000;
+            max-width: 95%;
+            margin: 0 auto;
             border: 1px solid #e2e8f0;
         }
         .emoji-picker span {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             cursor: pointer;
             text-align: center;
             padding: 5px;
-            border-radius: 10px;
+            border-radius: 12px;
         }
         .emoji-picker span:active {
             background: #e2e8f0;
+            transform: scale(0.95);
         }
 
         /* Mesaj alanı */
         .messages-area {
             flex: 1;
             overflow-y: auto;
-            padding: 12px 12px;
+            padding: 10px 12px;
             background: #f1f5f9;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -414,26 +394,26 @@
             background: #3b82f6;
         }
         .message-image {
-            max-width: 200px;
-            max-height: 200px;
+            max-width: 180px;
+            max-height: 180px;
             border-radius: 12px;
             cursor: pointer;
         }
 
         .message-time {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: #64748b;
-            margin-top: 3px;
+            margin-top: 2px;
             margin-left: 6px;
             margin-right: 6px;
         }
 
         .current-chat-info {
-            padding: 6px 12px;
+            padding: 5px 12px;
             background: #ffffff;
             border-top: 1px solid #eef2f6;
             border-bottom: 1px solid #eef2f6;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
             color: #334155;
             display: flex;
@@ -447,36 +427,18 @@
             font-weight: 600;
         }
 
-        /* Input alanı - butonlar düzenli */
-        .input-area {
-            padding: 10px 12px;
+        /* Input alanı - butonlar mesaj kutusunun ALTINDA */
+        .input-container {
+            flex-shrink: 0;
             background: white;
             border-top: 1px solid #edf2f7;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .input-buttons {
-            display: flex;
-            gap: 6px;
-        }
-
-        .icon-btn {
-            background: #f1f5f9;
-            border: none;
             padding: 8px 12px;
-            border-radius: 28px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.1s;
         }
 
-        .icon-btn:active {
-            transform: scale(0.95);
-            background: #e2e8f0;
+        .message-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         #messageInput {
@@ -485,12 +447,12 @@
             border: 1px solid #cbd5e1;
             border-radius: 28px;
             outline: none;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             background: #ffffff;
         }
 
         #sendButton {
-            padding: 10px 18px;
+            padding: 10px 20px;
             background: #4a90e2;
             color: white;
             border: none;
@@ -499,6 +461,7 @@
             font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
+            min-width: 70px;
         }
 
         #sendButton:active {
@@ -510,25 +473,54 @@
             cursor: not-allowed;
         }
 
+        .action-buttons-row {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-start;
+            padding: 4px 4px 0 4px;
+        }
+
+        .action-icon-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.1s;
+        }
+
+        .action-icon-btn:active {
+            transform: scale(0.96);
+            background: #e2e8f0;
+        }
+
         .retry-badge {
-            font-size: 0.6rem;
-            margin-left: 6px;
+            font-size: 0.55rem;
+            margin-left: 5px;
             background: #ff9800;
-            padding: 2px 6px;
-            border-radius: 16px;
+            padding: 2px 5px;
+            border-radius: 14px;
             color: white;
         }
 
         @media (max-width: 480px) {
-            .contacts-list { max-height: 115px; }
-            .icon-btn { padding: 6px 10px; font-size: 1rem; }
-            #sendButton { padding: 10px 14px; min-width: 60px; font-size: 0.8rem; }
+            .contacts-list { max-height: 100px; }
+            .action-icon-btn { padding: 6px 12px; font-size: 0.75rem; }
+            #sendButton { padding: 8px 16px; min-width: 60px; font-size: 0.8rem; }
+            #messageInput { padding: 8px 12px; font-size: 0.85rem; }
+            .emoji-picker { grid-template-columns: repeat(7, 1fr); bottom: 95px; }
+            .emoji-picker span { font-size: 1.4rem; }
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <!-- SEYFİÇET başlığı + logo + P2P yazısı -->
+        <!-- SEYFİÇET başlığı + logo -->
         <div class="app-header">
             <div class="logo-icon">💬</div>
             <div class="header-text">
@@ -559,25 +551,28 @@
                 </div>
             </div>
             <div class="contacts-list" id="contactsList">
-                <div style="text-align:center; color:#94a3b8; padding:10px;">Henüz kişi eklenmemiş</div>
+                <div style="text-align:center; color:#94a3b8; padding:8px;">Henüz kişi eklenmemiş</div>
             </div>
         </div>
 
-        <div class="current-chat-info" id="currentChatInfo">
+        <div class="current-chat-info">
             💬 Sohbet: <span id="activeContactName" class="current-chat-name">Seçili kişi yok</span>
             <span id="connectionRetryBadge" style="display:none;" class="retry-badge">🔄 Yeniden bağlanıyor...</span>
         </div>
 
         <div class="messages-area" id="messagesArea"></div>
 
-        <div class="input-area">
-            <div class="input-buttons">
-                <button class="icon-btn" id="emojiBtn" title="Emoji">😊</button>
-                <button class="icon-btn" id="fileBtn" title="Dosya">📎</button>
-                <button class="icon-btn" id="imageBtn" title="Resim">🖼️</button>
+        <!-- Input alanı: mesaj kutusu ve butonlar altında -->
+        <div class="input-container">
+            <div class="message-input-row">
+                <input type="text" id="messageInput" placeholder="Mesaj yazın..." disabled>
+                <button id="sendButton" disabled>Gönder</button>
             </div>
-            <input type="text" id="messageInput" placeholder="Mesaj yaz..." disabled>
-            <button id="sendButton" disabled>Gönder</button>
+            <div class="action-buttons-row">
+                <button class="action-icon-btn" id="emojiBtn">😊 Emoji</button>
+                <button class="action-icon-btn" id="fileBtn">📎 Dosya</button>
+                <button class="action-icon-btn" id="imageBtn">🖼️ Resim</button>
+            </div>
         </div>
     </div>
 
@@ -767,6 +762,7 @@
             currentConnection.send({ type: 'text', text: text });
             addMessageToHistory(activeContactId, text, 'Ben', true, 'text');
             messageInput.value = '';
+            messageInput.focus();
         }
 
         function sendFile(file, type) {
@@ -787,6 +783,16 @@
                 addMessageToHistory(activeContactId, file.name, 'Ben', true, type, data, file.type);
             };
             reader.readAsDataURL(file);
+        }
+
+        // Emoji gönderme (doğrudan mesaj olarak)
+        function sendEmoji(emoji) {
+            if (!isConnected || !currentConnection || !activeContactId) {
+                addSystemMessage('Önce bir kişi seçip bağlanın.');
+                return;
+            }
+            currentConnection.send({ type: 'text', text: emoji });
+            addMessageToHistory(activeContactId, emoji, 'Ben', true, 'text');
         }
 
         // Veri yönetimi
@@ -818,7 +824,7 @@
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message received';
             msgDiv.style.alignSelf = 'center';
-            msgDiv.innerHTML = `<div class="message-content" style="background:#eef2ff; font-size:0.7rem; padding:5px 10px;">📡 ${escapeHtml(text)}</div>`;
+            msgDiv.innerHTML = `<div class="message-content" style="background:#eef2ff; font-size:0.7rem; padding:4px 10px;">📡 ${escapeHtml(text)}</div>`;
             messagesArea.appendChild(msgDiv);
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
@@ -859,7 +865,7 @@
 
         function renderContactsList() {
             if (contacts.length === 0) {
-                contactsListDiv.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:10px;">📭 Henüz kişi yok</div>';
+                contactsListDiv.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:8px;">📭 Henüz kişi yok</div>';
                 return;
             }
             contactsListDiv.innerHTML = '';
@@ -869,7 +875,7 @@
                 div.innerHTML = `
                     <div class="contact-info">
                         <div class="contact-name">${escapeHtml(contact.name)}</div>
-                        <div class="contact-peerid">${escapeHtml(contact.peerId.substring(0, 16))}...</div>
+                        <div class="contact-peerid">${escapeHtml(contact.peerId.substring(0, 14))}...</div>
                     </div>
                     <div class="contact-actions">
                         <button class="connect-contact-btn" data-id="${contact.id}" data-peer="${contact.peerId}" data-name="${escapeHtml(contact.name)}">🔗 Bağlan</button>
@@ -927,18 +933,17 @@
             }
         }
 
-        // Emoji seçici
+        // Emoji seçici - emoji gönderme
         function toggleEmojiPicker() {
             if (emojiPicker) { emojiPicker.remove(); emojiPicker = null; return; }
             emojiPicker = document.createElement('div');
             emojiPicker.className = 'emoji-picker';
-            const emojis = ['😀', '😂', '🥰', '😎', '😢', '😡', '👍', '❤️', '🔥', '🎉', '🙏', '💯', '✨', '🍕', '☕', '🏆'];
+            const emojis = ['😀', '😂', '🥰', '😎', '😢', '😡', '👍', '❤️', '🔥', '🎉', '🙏', '💯', '✨', '🍕', '☕', '🏆', '😍', '🥺', '🤣', '💪', '👋', '🎈', '⭐', '🌈'];
             emojis.forEach(emoji => {
                 const span = document.createElement('span');
                 span.textContent = emoji;
                 span.onclick = () => {
-                    messageInput.value += emoji;
-                    messageInput.focus();
+                    sendEmoji(emoji);
                     emojiPicker.remove();
                     emojiPicker = null;
                 };
@@ -947,8 +952,10 @@
             document.body.appendChild(emojiPicker);
             const rect = emojiBtn.getBoundingClientRect();
             emojiPicker.style.position = 'fixed';
-            emojiPicker.style.bottom = '70px';
-            emojiPicker.style.left = rect.left + 'px';
+            emojiPicker.style.bottom = '85px';
+            emojiPicker.style.left = '10px';
+            emojiPicker.style.right = '10px';
+            emojiPicker.style.width = 'auto';
         }
 
         // Dosya seç
