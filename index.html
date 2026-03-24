@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>P2P Anlık Mesajlaşma - Kişilerim</title>
+    <title>P2P Mesajlaşma - Kalıcı ID</title>
     <style>
         * {
             margin: 0;
@@ -57,7 +57,7 @@
             color: #f0f0f0;
         }
 
-        /* Kişi paneli - kalıcı kişiler */
+        /* Kişi paneli */
         .contacts-panel {
             background: #f8f9fc;
             border-bottom: 1px solid #e9ecef;
@@ -68,6 +68,15 @@
             padding: 10px 16px;
             background: #ffffff;
             border-bottom: 1px solid #eef2f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .my-id-box {
+            flex: 1;
+            min-width: 0;
         }
 
         .my-id-label {
@@ -87,6 +96,24 @@
             word-break: break-all;
             margin-top: 4px;
             color: #1e293b;
+        }
+
+        .copy-id-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.1s;
+        }
+
+        .copy-id-btn:active {
+            background: #cbd5e1;
+            transform: scale(0.96);
         }
 
         .contacts-header {
@@ -167,20 +194,19 @@
         .contact-actions button {
             background: none;
             border: none;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
-            padding: 4px 6px;
+            padding: 4px 8px;
             border-radius: 20px;
             transition: background 0.1s;
+            font-weight: 500;
         }
 
         .connect-contact-btn {
             background: #e6f7e6;
             color: #2e7d32;
-            font-size: 0.75rem;
-            font-weight: 500;
+            font-size: 0.7rem;
             padding: 4px 12px;
-            border-radius: 20px;
         }
 
         .connect-contact-btn:active {
@@ -190,13 +216,14 @@
         .delete-contact-btn {
             color: #ef4444;
             font-size: 1rem;
+            padding: 4px 8px;
         }
 
         .delete-contact-btn:active {
             background: #fee2e2;
         }
 
-        /* Modal (kişi ekleme) */
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -374,12 +401,18 @@
             transform: scale(0.97);
         }
 
+        .retry-badge {
+            font-size: 0.65rem;
+            margin-left: 6px;
+            background: #ff9800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: white;
+        }
+
         @media (max-width: 480px) {
             .contacts-list {
                 max-height: 120px;
-            }
-            .contact-name {
-                font-size: 0.85rem;
             }
         }
     </style>
@@ -391,25 +424,26 @@
             <div class="connection-status" id="status">Bağlantı bekleniyor...</div>
         </div>
 
-        <!-- Kişi paneli - localStorage ile kalıcı -->
         <div class="contacts-panel">
             <div class="my-info">
-                <div class="my-id-label">🔑 SİZİN ID'NİZ</div>
-                <div class="my-id-value" id="myPeerId">Bağlanıyor...</div>
+                <div class="my-id-box">
+                    <div class="my-id-label">🔑 SİZİN KALICI ID'NİZ</div>
+                    <div class="my-id-value" id="myPeerId">Bağlanıyor...</div>
+                </div>
+                <button class="copy-id-btn" id="copyIdBtn">📋 Kopyala</button>
             </div>
             <div class="contacts-header">
                 <span class="contacts-title">📒 KİŞİLERİM (kalıcı)</span>
                 <button class="add-contact-btn" id="addContactBtn">+ Yeni Kişi</button>
             </div>
             <div class="contacts-list" id="contactsList">
-                <!-- kişiler dinamik listelenecek -->
                 <div style="text-align:center; color:#94a3b8; padding:12px;">Henüz kişi eklenmemiş</div>
             </div>
         </div>
 
-        <!-- Aktif sohbet bilgisi -->
         <div class="current-chat-info" id="currentChatInfo">
             💬 Sohbet: <span id="activeContactName" class="current-chat-name">Seçili kişi yok</span>
+            <span id="connectionRetryBadge" style="display:none;" class="retry-badge">🔄 Yeniden bağlanıyor...</span>
         </div>
 
         <div class="messages-area" id="messagesArea"></div>
@@ -435,18 +469,25 @@
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
-        // ---------- KALICI KİŞİLER (localStorage) ----------
-        let contacts = []; // { id, name, peerId }
-        let activeContactId = null;      // Şu an mesajlaşılan kişinin id'si
+        // ============ KALICI ID VE KALICI KİŞİLER ============
+        // Kalıcı ID için localStorage'da saklanan özel ID
+        let myPermanentId = null;
+        let peer = null;
+        let currentConnection = null;
+        let isConnected = false;
+        let activeContactId = null;
         let activeContactPeerId = null;
         let activeContactName = "";
+        let reconnectTimer = null;
+        let isManualDisconnect = false;
 
-        // PeerJS değişkenleri
-        let peer;
-        let currentConnection = null;   // aktif bağlantı
-        let isConnected = false;
+        // Kişiler ve mesaj geçmişi
+        let contacts = [];
+        let messagesHistory = {};
 
         // DOM elementleri
+        const myPeerIdDiv = document.getElementById('myPeerId');
+        const copyIdBtn = document.getElementById('copyIdBtn');
         const contactsListDiv = document.getElementById('contactsList');
         const addContactBtn = document.getElementById('addContactBtn');
         const modal = document.getElementById('contactModal');
@@ -458,15 +499,225 @@
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const statusDiv = document.getElementById('status');
-        const myPeerIdDiv = document.getElementById('myPeerId');
         const activeContactNameSpan = document.getElementById('activeContactName');
+        const connectionRetryBadge = document.getElementById('connectionRetryBadge');
 
-        // Mesaj geçmişi: her kişi için ayrı (localStorage'da tutulacak)
-        let messagesHistory = {}; // { contactId: [ {text, sender, timestamp, isSent} ] }
+        // ============ Yardımcı fonksiyonlar ============
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
-        // Yardım: localStorage'dan yükleme
+        // Kalıcı ID oluştur veya yükle (sayfa yenilense bile aynı ID)
+        function getOrCreatePermanentId() {
+            let savedId = localStorage.getItem('p2p_my_permanent_id');
+            if (savedId && savedId.trim() !== "") {
+                return savedId;
+            }
+            // Yeni ID oluştur: benzersiz ve kalıcı
+            const newId = 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10) + '_' + Math.random().toString(36).substring(2, 8);
+            localStorage.setItem('p2p_my_permanent_id', newId);
+            return newId;
+        }
+
+        // PeerJS'i kalıcı ID ile başlat
+        function initPeerWithPermanentId() {
+            myPermanentId = getOrCreatePermanentId();
+            myPeerIdDiv.textContent = myPermanentId;
+            
+            // PeerJS'i özel ID ile başlat
+            peer = new Peer(myPermanentId, {
+                debug: 0,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+            
+            peer.on('open', (id) => {
+                console.log('Peer açıldı, ID:', id);
+                if (id === myPermanentId) {
+                    statusDiv.innerHTML = '✅ Kalıcı ID aktif! Kişi ekleyip bağlanabilirsiniz.';
+                    statusDiv.style.color = '#d1fae5';
+                }
+                // Bağlantı kesildikten sonra otomatik yeniden bağlanma için peer yeniden bağlanabilir
+            });
+            
+            peer.on('error', (err) => {
+                console.error('Peer hatası:', err);
+                if (err.type === 'unavailable-id') {
+                    // ID çakışması olursa yeni ID oluştur
+                    console.warn('ID çakışması, yeni ID oluşturuluyor...');
+                    localStorage.removeItem('p2p_my_permanent_id');
+                    myPermanentId = getOrCreatePermanentId();
+                    peer.destroy();
+                    initPeerWithPermanentId();
+                } else {
+                    statusDiv.innerHTML = '⚠️ Bağlantı sorunu, yeniden bağlanılıyor...';
+                }
+            });
+            
+            peer.on('disconnected', () => {
+                console.log('Peer bağlantısı kesildi, yeniden bağlanıyor...');
+                if (!isManualDisconnect) {
+                    statusDiv.innerHTML = '🔄 Sunucu bağlantısı yenileniyor...';
+                    peer.reconnect();
+                }
+            });
+            
+            peer.on('connection', handleIncomingConnection);
+        }
+
+        // Gelen bağlantıyı yönet
+        function handleIncomingConnection(incomingConn) {
+            const remotePeerId = incomingConn.peer;
+            const contact = contacts.find(c => c.peerId === remotePeerId);
+            
+            if (!contact) {
+                // Tanınmayan kişi: bağlantıyı reddet
+                incomingConn.close();
+                addSystemMessageToActive('Tanınmayan bir bağlantı isteği reddedildi.');
+                return;
+            }
+            
+            // Mevcut bağlantı varsa kapat
+            if (currentConnection) {
+                currentConnection.close();
+            }
+            
+            currentConnection = incomingConn;
+            activeContactId = contact.id;
+            activeContactPeerId = contact.peerId;
+            activeContactName = contact.name;
+            activeContactNameSpan.textContent = contact.name;
+            renderMessagesForActiveContact();
+            setupConnectionEvents(currentConnection, contact.name);
+            addSystemMessageToActive(`${contact.name} sizinle bağlantı kurdu.`);
+            setConnectedState(true);
+        }
+
+        // Bağlantı olaylarını ayarla
+        function setupConnectionEvents(connection, contactName) {
+            connection.on('open', () => {
+                setConnectedState(true);
+                statusDiv.innerHTML = `✅ ${contactName} ile bağlantı aktif`;
+                addSystemMessageToActive(`${contactName} ile görüşmeye hazırsınız.`);
+                hideRetryBadge();
+                if (reconnectTimer) clearTimeout(reconnectTimer);
+            });
+            
+            connection.on('data', (data) => {
+                if (data && data.text && activeContactId) {
+                    addMessageToUIAndHistory(activeContactId, data.text, contactName, false);
+                }
+            });
+            
+            connection.on('close', () => {
+                if (currentConnection === connection) {
+                    addSystemMessageToActive(`${contactName} bağlantıyı kapattı.`);
+                    setConnectedState(false);
+                    currentConnection = null;
+                    // Otomatik yeniden bağlanmayı dene
+                    scheduleReconnect();
+                }
+            });
+            
+            connection.on('error', (err) => {
+                if (currentConnection === connection) {
+                    addSystemMessageToActive(`${contactName} bağlantı hatası: ${err.message || 'bağlantı sorunu'}`);
+                    setConnectedState(false);
+                    currentConnection = null;
+                    scheduleReconnect();
+                }
+            });
+        }
+
+        // Otomatik yeniden bağlanma
+        function scheduleReconnect() {
+            if (!activeContactId || isManualDisconnect) return;
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            showRetryBadge();
+            reconnectTimer = setTimeout(() => {
+                if (!isConnected && activeContactId) {
+                    const contact = contacts.find(c => c.id === activeContactId);
+                    if (contact) {
+                        addSystemMessageToActive(`${contact.name} için yeniden bağlanılıyor...`);
+                        initiateConnectionToPeer(contact.peerId, contact.name);
+                    }
+                }
+                hideRetryBadge();
+            }, 3000);
+        }
+
+        function showRetryBadge() {
+            if (connectionRetryBadge) connectionRetryBadge.style.display = 'inline-block';
+        }
+        function hideRetryBadge() {
+            if (connectionRetryBadge) connectionRetryBadge.style.display = 'none';
+        }
+
+        // Bağlantı kurma
+        function initiateConnectionToPeer(peerId, contactName) {
+            if (!peer) return;
+            if (currentConnection) {
+                currentConnection.close();
+                currentConnection = null;
+            }
+            isManualDisconnect = false;
+            statusDiv.innerHTML = `🔄 ${contactName} bağlanıyor...`;
+            const newConn = peer.connect(peerId);
+            if (!newConn) return;
+            currentConnection = newConn;
+            setupConnectionEvents(currentConnection, contactName);
+            
+            // 10 saniye timeout
+            setTimeout(() => {
+                if (currentConnection === newConn && !isConnected) {
+                    addSystemMessageToActive(`${contactName} bağlantı zaman aşımı, tekrar deneniyor...`);
+                    setConnectedState(false);
+                    if (currentConnection === newConn) {
+                        currentConnection = null;
+                    }
+                    scheduleReconnect();
+                }
+            }, 10000);
+        }
+
+        function setConnectedState(connected) {
+            isConnected = connected;
+            messageInput.disabled = !connected;
+            sendButton.disabled = !connected;
+            if (!connected) {
+                statusDiv.innerHTML = '❌ Bağlantı kesildi, otomatik yeniden bağlanılıyor...';
+                statusDiv.style.color = '#fed7d7';
+            }
+        }
+
+        // Mesaj gönderme
+        function sendMessageToActive() {
+            if (!isConnected || !currentConnection || !activeContactId) {
+                addSystemMessageToActive('Önce bir kişi seçip bağlanmalısınız.');
+                return;
+            }
+            const text = messageInput.value.trim();
+            if (!text) return;
+            const payload = { text: text, sender: activeContactName, timestamp: Date.now() };
+            currentConnection.send(payload);
+            addMessageToUIAndHistory(activeContactId, text, 'Ben', true);
+            messageInput.value = '';
+            messageInput.focus();
+        }
+
+        // Mesaj geçmişi işlemleri
         function loadContacts() {
-            const stored = localStorage.getItem('p2p_contacts');
+            const stored = localStorage.getItem('p2p_contacts_v2');
             if (stored) {
                 try {
                     contacts = JSON.parse(stored);
@@ -474,19 +725,15 @@
             } else {
                 contacts = [];
             }
-            // Örnek demo kişi ekleme (ilk kez açan için örnek, amaç göstermek)
-            if (contacts.length === 0) {
-                // Tamamen boşsa hiç ekleme, kullanıcı kendi eklesin. Ama isteğe bağlı örnek yok.
-            }
             renderContactsList();
         }
 
         function saveContacts() {
-            localStorage.setItem('p2p_contacts', JSON.stringify(contacts));
+            localStorage.setItem('p2p_contacts_v2', JSON.stringify(contacts));
         }
 
         function loadMessagesHistory() {
-            const storedMsg = localStorage.getItem('p2p_messages_history');
+            const storedMsg = localStorage.getItem('p2p_messages_history_v2');
             if (storedMsg) {
                 try {
                     messagesHistory = JSON.parse(storedMsg);
@@ -497,21 +744,38 @@
         }
 
         function saveMessagesHistory() {
-            localStorage.setItem('p2p_messages_history', JSON.stringify(messagesHistory));
+            localStorage.setItem('p2p_messages_history_v2', JSON.stringify(messagesHistory));
         }
 
-        // Belirli bir kişi için mesaj geçmişini güncelleme
-        function addMessageToHistory(contactId, messageObj) {
+        function addMessageToUIAndHistory(contactId, text, senderName, isSent) {
+            const messageObj = {
+                text: text,
+                senderName: senderName,
+                timestamp: Date.now(),
+                isSent: isSent
+            };
             if (!messagesHistory[contactId]) messagesHistory[contactId] = [];
             messagesHistory[contactId].push(messageObj);
             saveMessagesHistory();
+            if (activeContactId === contactId) {
+                renderMessagesForActiveContact();
+            }
         }
 
-        // Mesajları ekrana bas (aktif kişiye göre)
+        function addSystemMessageToActive(text) {
+            if (!activeContactId) return;
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message received';
+            msgDiv.style.alignSelf = 'center';
+            msgDiv.style.maxWidth = '85%';
+            msgDiv.innerHTML = `<div class="message-content" style="background:#eef2ff; color:#334155; font-size:0.75rem; padding:6px 12px;">📡 ${escapeHtml(text)}</div>`;
+            messagesArea.appendChild(msgDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
         function renderMessagesForActiveContact() {
             messagesArea.innerHTML = '';
             if (!activeContactId) {
-                // boş mesaj alanı
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'message received';
                 emptyDiv.style.alignSelf = 'center';
@@ -538,47 +802,7 @@
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
 
-        // Yeni mesaj geldiğinde (gerçek zamanlı veya manuel ekleme)
-        function addMessageToUIAndHistory(contactId, text, senderName, isSent, remoteSide = false) {
-            const messageObj = {
-                text: text,
-                senderName: senderName,
-                timestamp: Date.now(),
-                isSent: isSent
-            };
-            addMessageToHistory(contactId, messageObj);
-            // eğer aktif sohbet bu kişi ise UI'ı güncelle
-            if (activeContactId === contactId) {
-                renderMessagesForActiveContact();
-            }
-        }
-
-        // Sistem mesajı (sohbet alanına)
-        function addSystemMessageToActive(text) {
-            if (!activeContactId) return;
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message received';
-            msgDiv.style.alignSelf = 'center';
-            msgDiv.style.maxWidth = '85%';
-            msgDiv.innerHTML = `<div class="message-content" style="background:#eef2ff; color:#334155; font-size:0.75rem; padding:6px 12px;">📡 ${escapeHtml(text)}</div>`;
-            messagesArea.appendChild(msgDiv);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-            // sistem mesajlarını kaydetme (isteğe bağlı, tutmak istersen history ekleyebiliriz ama konuşma dışı)
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-                return c;
-            });
-        }
-
-        // Kişi listesini render et
+        // Kişi listesi render
         function renderContactsList() {
             if (!contactsListDiv) return;
             if (contacts.length === 0) {
@@ -593,7 +817,7 @@
                 contactDiv.innerHTML = `
                     <div class="contact-info">
                         <div class="contact-name">${escapeHtml(contact.name)}</div>
-                        <div class="contact-peerid">${escapeHtml(contact.peerId.substring(0, 12))}...</div>
+                        <div class="contact-peerid">${escapeHtml(contact.peerId.substring(0, 16))}...</div>
                     </div>
                     <div class="contact-actions">
                         <button class="connect-contact-btn" data-id="${contact.id}" data-peer="${contact.peerId}" data-name="${escapeHtml(contact.name)}">🔗 Bağlan</button>
@@ -602,7 +826,7 @@
                 `;
                 contactsListDiv.appendChild(contactDiv);
             });
-            // event listener ekle
+            
             document.querySelectorAll('.connect-contact-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -622,21 +846,19 @@
         }
 
         function selectAndConnectToContact(contactId, peerId, name) {
-            // aktif kişiyi güncelle
             activeContactId = contactId;
             activeContactPeerId = peerId;
             activeContactName = name;
             activeContactNameSpan.innerText = name;
-            // mesaj geçmişini göster
             renderMessagesForActiveContact();
-            // mevcut bağlantı varsa kapat ve yeni bağlantı kur
+            
             if (currentConnection) {
                 currentConnection.close();
                 currentConnection = null;
                 isConnected = false;
                 setConnectedState(false);
             }
-            // bağlanma dene
+            isManualDisconnect = false;
             initiateConnectionToPeer(peerId, name);
         }
 
@@ -644,7 +866,6 @@
             if (confirm('Kişiyi silmek tüm mesaj geçmişini de siler. Devam et?')) {
                 contacts = contacts.filter(c => c.id !== contactId);
                 saveContacts();
-                // mesaj geçmişini de sil
                 if (messagesHistory[contactId]) {
                     delete messagesHistory[contactId];
                     saveMessagesHistory();
@@ -666,90 +887,7 @@
             }
         }
 
-        function setConnectedState(connected) {
-            isConnected = connected;
-            messageInput.disabled = !connected;
-            sendButton.disabled = !connected;
-            if (connected) {
-                statusDiv.innerHTML = '✅ Bağlantı kuruldu! Mesajlaşabilirsiniz.';
-                statusDiv.style.color = '#d1fae5';
-            } else {
-                statusDiv.innerHTML = '❌ Bağlantı kesildi. Tekrar bağlanın.';
-                statusDiv.style.color = '#fed7d7';
-            }
-        }
-
-        function initiateConnectionToPeer(peerId, contactName) {
-            if (!peer) return;
-            if (currentConnection) {
-                currentConnection.close();
-                currentConnection = null;
-            }
-            statusDiv.innerHTML = `🔄 ${contactName} bağlanıyor...`;
-            const newConn = peer.connect(peerId);
-            if (!newConn) return;
-            currentConnection = newConn;
-            setupConnectionEvents(currentConnection, contactName);
-            // timeout kontrolü
-            setTimeout(() => {
-                if (currentConnection === newConn && !isConnected) {
-                    addSystemMessageToActive(`${contactName} bağlantı zaman aşımı, ID kontrol edin.`);
-                    statusDiv.innerHTML = '❌ Bağlantı başarısız';
-                    setConnectedState(false);
-                }
-            }, 10000);
-        }
-
-        function setupConnectionEvents(connection, contactName) {
-            connection.on('open', () => {
-                setConnectedState(true);
-                statusDiv.innerHTML = `✅ ${contactName} ile bağlantı aktif`;
-                addSystemMessageToActive(`${contactName} ile görüşmeye hazırsınız.`);
-            });
-            connection.on('data', (data) => {
-                if (data && data.text) {
-                    // gelen mesaj
-                    if (activeContactId) {
-                        addMessageToUIAndHistory(activeContactId, data.text, contactName, false);
-                    } else {
-                        // aktif kişi yoksa ama yine de kaydetmek için? bu durumda ilgili kişi aktif olmalı
-                        if (activeContactId) addMessageToUIAndHistory(activeContactId, data.text, contactName, false);
-                    }
-                }
-            });
-            connection.on('close', () => {
-                if (currentConnection === connection) {
-                    addSystemMessageToActive(`${contactName} bağlantıyı kapattı.`);
-                    setConnectedState(false);
-                    currentConnection = null;
-                }
-            });
-            connection.on('error', (err) => {
-                if (currentConnection === connection) {
-                    addSystemMessageToActive(`${contactName} bağlantı hatası: ${err.message || 'bağlantı sorunu'}`);
-                    setConnectedState(false);
-                    currentConnection = null;
-                }
-            });
-        }
-
-        // Mesaj gönderme fonksiyonu (aktif kişiye)
-        function sendMessageToActive() {
-            if (!isConnected || !currentConnection || !activeContactId) {
-                addSystemMessageToActive('Önce bir kişi seçip bağlanmalısınız.');
-                return;
-            }
-            const text = messageInput.value.trim();
-            if (!text) return;
-            const payload = { text: text, sender: activeContactName, timestamp: Date.now() };
-            currentConnection.send(payload);
-            // mesajı kendi geçmişe ekle
-            addMessageToUIAndHistory(activeContactId, text, 'Ben', true);
-            messageInput.value = '';
-            messageInput.focus();
-        }
-
-        // Yeni kişi ekleme modal
+        // Modal işlemleri
         function showModal() {
             contactNameInput.value = '';
             contactPeerIdInput.value = '';
@@ -765,12 +903,11 @@
                 alert('Lütfen ad ve Peer ID girin');
                 return;
             }
-            // aynı peerId var mı kontrol
             if (contacts.some(c => c.peerId === peerId)) {
                 alert('Bu Peer ID zaten kişilerinizde mevcut.');
                 return;
             }
-            const newId = Date.now().toString() + Math.random().toString(36);
+            const newId = Date.now().toString() + '_' + Math.random().toString(36);
             const newContact = { id: newId, name: name, peerId: peerId };
             contacts.push(newContact);
             saveContacts();
@@ -778,61 +915,38 @@
             hideModal();
         }
 
-        // PeerJS başlatma
-        function initPeer() {
-            peer = new Peer({
-                debug: 0,
-                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-            });
-            peer.on('open', (id) => {
-                myPeerIdDiv.innerText = id;
-                statusDiv.innerHTML = '✅ Hazır, kişi ekleyip bağlanabilirsiniz.';
-            });
-            peer.on('connection', (incomingConn) => {
-                // Gelen bağlantıyı kabul et, eğer bu kişi rehberde var mı kontrol et
-                const remotePeerId = incomingConn.peer;
-                const contact = contacts.find(c => c.peerId === remotePeerId);
-                if (!contact) {
-                    // tanınmayan peer, otomatik reddet veya isteğe bağlı ekleme sor
-                    incomingConn.close();
-                    addSystemMessageToActive('Tanınmayan bir bağlantı isteği reddedildi.');
-                    return;
-                }
-                if (currentConnection) currentConnection.close();
-                currentConnection = incomingConn;
-                activeContactId = contact.id;
-                activeContactPeerId = contact.peerId;
-                activeContactName = contact.name;
-                activeContactNameSpan.innerText = contact.name;
-                renderMessagesForActiveContact();
-                setupConnectionEvents(currentConnection, contact.name);
-                addSystemMessageToActive(`${contact.name} sizinle bağlantı kurdu.`);
-                setConnectedState(true);
-            });
-            peer.on('error', (err) => {
-                console.warn(err);
-                statusDiv.innerHTML = '⚠️ Peer bağlantı hatası';
-            });
+        // ID kopyalama
+        function copyMyId() {
+            if (myPermanentId) {
+                navigator.clipboard.writeText(myPermanentId).then(() => {
+                    const originalText = copyIdBtn.textContent;
+                    copyIdBtn.textContent = '✅ Kopyalandı!';
+                    setTimeout(() => {
+                        copyIdBtn.textContent = originalText;
+                    }, 1500);
+                }).catch(() => {
+                    alert('ID kopyalanamadı, manuel kopyalayın: ' + myPermanentId);
+                });
+            }
         }
 
-        // Event listeners
+        // Event listener'lar
         addContactBtn.addEventListener('click', showModal);
         modalCancelBtn.addEventListener('click', hideModal);
         modalSaveBtn.addEventListener('click', saveNewContact);
         sendButton.addEventListener('click', sendMessageToActive);
+        copyIdBtn.addEventListener('click', copyMyId);
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && isConnected && activeContactId) sendMessageToActive();
         });
-        // Modal dışına tıklayınca kapatma
         window.addEventListener('click', (e) => {
             if (e.target === modal) hideModal();
         });
 
-        // Uygulama başlangıcı
+        // Uygulama başlatma
         loadContacts();
         loadMessagesHistory();
-        initPeer();
-        // Başlangıçta aktif yok
+        initPeerWithPermanentId();
         activeContactId = null;
         renderMessagesForActiveContact();
     </script>
