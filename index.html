@@ -948,7 +948,7 @@
                             <span>${myPhoneNumber && myPhoneNumber !== "" ? escapeHtml(myPhoneNumber) : "Henüz ayarlanmadı"}</span>
                             <button class="mini-btn primary" id="editPhoneSettingsBtn">${myPhoneNumber ? "✏️ Düzenle" : "➕ Ekle"}</button>
                         </div>
-                        <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanır.</div>
+                        <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanır. Dilerseniz telefon numarası dışında bir ID belirleyebilirsiniz.</div>
                                             </div>
                 `;
                 document.getElementById('editPhoneSettingsBtn')?.addEventListener('click', () => showPhoneEditModal());
