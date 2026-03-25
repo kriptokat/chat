@@ -19,26 +19,26 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 24px;
+            padding: 16px;
         }
 
         .chat-container {
             width: 100%;
-            max-width: 500px;
-            height: 85vh;
-            max-height: 750px;
+            max-width: 480px;
+            height: 100%;
+            max-height: 800px;
             background: white;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border-radius: 32px;
+            border-radius: 28px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
         }
 
         .app-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 14px 20px;
+            padding: 14px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -47,13 +47,13 @@
         .logo-area {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
         .logo-icon {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
         }
         .header-text h2 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 700;
             letter-spacing: 0.5px;
         }
@@ -61,47 +61,69 @@
             background: rgba(255,255,255,0.2);
             border: none;
             color: white;
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
         }
         .settings-icon-btn:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(0.96);
         }
 
+        /* Telefon numarası - küçük punto, başlıksız */
+        .my-phone-mini {
+            background: #f1f5f9;
+            padding: 6px 16px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .my-phone-mini span {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #475569;
+            font-weight: 500;
+        }
+        .copy-phone-mini {
+            background: none;
+            border: none;
+            font-size: 0.65rem;
+            color: #4a90e2;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+
         .chat-header {
             background: #4a90e2;
             color: white;
-            padding: 8px 16px;
+            padding: 6px 12px;
             text-align: center;
             flex-shrink: 0;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
         }
 
         .current-chat-info {
-            padding: 8px 16px;
+            padding: 8px 14px;
             background: #ffffff;
-            border-top: 1px solid #eef2f6;
             border-bottom: 1px solid #eef2f6;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
         }
         .current-chat-name { color: #4a90e2; font-weight: 700; }
         .typing-indicator {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             color: #4a90e2;
-            padding: 4px 12px;
+            padding: 2px 10px;
             font-style: italic;
             background: #eef2ff;
             border-radius: 20px;
@@ -111,11 +133,11 @@
         .messages-area {
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 12px;
             background: #f8fafc;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .message { display: flex; flex-direction: column; max-width: 85%; }
@@ -123,19 +145,19 @@
         .message.received { align-self: flex-start; align-items: flex-start; }
 
         .message-content {
-            padding: 10px 14px;
-            border-radius: 22px;
+            padding: 8px 12px;
+            border-radius: 20px;
             word-wrap: break-word;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.4;
         }
-        .sent .message-content { background: #4a90e2; color: white; border-bottom-right-radius: 5px; }
-        .received .message-content { background: white; color: #1e293b; border: 0.5px solid #e2e8f0; border-bottom-left-radius: 5px; }
+        .sent .message-content { background: #4a90e2; color: white; border-bottom-right-radius: 4px; }
+        .received .message-content { background: white; color: #1e293b; border: 0.5px solid #e2e8f0; border-bottom-left-radius: 4px; }
 
         .read-status {
-            font-size: 0.55rem;
-            margin-top: 4px;
-            margin-right: 6px;
+            font-size: 0.5rem;
+            margin-top: 2px;
+            margin-right: 4px;
             color: #64748b;
         }
         .sent .read-status { color: #cbd5e1; }
@@ -145,40 +167,41 @@
             flex-shrink: 0;
             background: white;
             border-top: 1px solid #edf2f7;
-            padding: 12px 16px;
+            padding: 10px 12px;
         }
-        .message-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .message-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
         #messageInput {
             flex: 1;
-            padding: 12px 18px;
+            padding: 10px 14px;
             border: 1px solid #cbd5e1;
-            border-radius: 32px;
+            border-radius: 28px;
             outline: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         #messageInput:focus { border-color: #4a90e2; }
         #sendButton {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: #4a90e2;
             color: white;
             border: none;
-            border-radius: 32px;
+            border-radius: 28px;
             font-weight: 600;
             cursor: pointer;
+            font-size: 0.85rem;
         }
         #sendButton:disabled { opacity: 0.5; cursor: not-allowed; }
-        .action-buttons-row { display: flex; gap: 12px; }
+        .action-buttons-row { display: flex; gap: 10px; }
         .action-icon-btn {
             background: #f1f5f9;
             border: none;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
+            padding: 6px 16px;
+            border-radius: 28px;
+            font-size: 0.75rem;
             cursor: pointer;
         }
 
-        /* AYARLAR MENÜSÜ (Sağda, ikonla açılır) - Kişilerim listesi de içinde */
-        .settings-menu-overlay {
+        /* AYARLAR MENÜSÜ - Açılır Kutu (Dropdown) */
+        .settings-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -191,27 +214,32 @@
             z-index: 1000;
             backdrop-filter: blur(4px);
         }
-        .settings-menu {
+        .settings-dropdown {
             background: white;
             width: 90%;
-            max-width: 400px;
+            max-width: 380px;
             max-height: 85vh;
-            border-radius: 32px;
+            border-radius: 28px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+            animation: slideUp 0.2s ease;
         }
-        .settings-header {
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .settings-dropdown-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 18px 20px;
+            padding: 16px 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-        .settings-header h3 {
-            font-size: 1.2rem;
+        .settings-dropdown-header h3 {
+            font-size: 1.1rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -220,174 +248,173 @@
         .close-settings {
             background: rgba(255,255,255,0.2);
             border: none;
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .settings-body {
+        .settings-dropdown-body {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-        }
-        .settings-section {
-            margin-bottom: 28px;
-        }
-        .section-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .phone-settings {
-            background: #f8fafc;
-            border-radius: 20px;
             padding: 16px;
         }
-        .phone-settings label {
-            font-size: 0.75rem;
-            color: #475569;
+        
+        /* Telefon ayarı bölümü */
+        .phone-settings-simple {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+        .phone-settings-simple label {
+            font-size: 0.7rem;
+            color: #64748b;
             display: block;
             margin-bottom: 6px;
         }
-        .phone-input-group {
+        .phone-input-flex {
             display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 8px;
         }
-        .phone-input-group input {
+        .phone-input-flex input {
             flex: 1;
-            padding: 12px 16px;
+            padding: 10px 14px;
             border: 1px solid #e2e8f0;
             border-radius: 28px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-family: monospace;
         }
-        .save-phone-btn {
+        .save-phone-small {
             background: #4a90e2;
             color: white;
             border: none;
-            padding: 0 20px;
+            padding: 0 16px;
             border-radius: 28px;
             font-weight: 600;
+            font-size: 0.75rem;
             cursor: pointer;
         }
-        .current-phone {
-            font-size: 0.8rem;
-            color: #1e293b;
-            background: #eef2ff;
-            padding: 8px 12px;
-            border-radius: 16px;
-            display: inline-block;
+        .current-phone-small {
+            font-size: 0.7rem;
             font-family: monospace;
+            background: #eef2ff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 8px;
         }
         
-        /* Kişiler Listesi (Ayarlar içinde) */
-        .contacts-list-settings {
+        /* Kişilerim Listesi - Açılır Kutu İçinde */
+        .contacts-section {
+            margin-top: 8px;
+        }
+        .section-mini-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .contacts-list-dropdown {
             background: #f8fafc;
             border-radius: 20px;
             overflow: hidden;
+            max-height: 320px;
+            overflow-y: auto;
         }
-        .contact-settings-item {
+        .contact-dropdown-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 10px 12px;
             border-bottom: 1px solid #e2e8f0;
             cursor: pointer;
             transition: background 0.15s;
         }
-        .contact-settings-item:hover {
+        .contact-dropdown-item:hover {
             background: #f1f5f9;
         }
-        .contact-settings-item.active {
+        .contact-dropdown-item.active {
             background: #eef2ff;
             border-left: 3px solid #4a90e2;
         }
-        .contact-settings-info {
-            flex: 1;
+        .contact-info-flex {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            flex: 1;
         }
-        .contact-settings-number {
+        .contact-number-circle {
             background: #e2e8f0;
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             color: #475569;
         }
-        .contact-settings-details {
+        .contact-details {
             flex: 1;
         }
-        .contact-settings-name {
+        .contact-name-small {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
         }
-        .contact-settings-phone {
-            font-size: 0.65rem;
+        .contact-phone-small {
+            font-size: 0.6rem;
             color: #64748b;
             font-family: monospace;
             margin-top: 2px;
         }
-        .contact-status-dot {
+        .status-dot-small {
             width: 8px;
             height: 8px;
             border-radius: 50%;
         }
-        .contact-status-dot.online { background: #22c55e; }
-        .contact-status-dot.offline { background: #ef4444; }
-        .contact-status-dot.connecting { background: #eab308; animation: pulse 1s infinite; }
-        @keyframes pulse {
-            0% { opacity: 0.5; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1.2); }
-        }
-        .contact-badge {
-            font-size: 0.6rem;
-            padding: 2px 8px;
+        .status-dot-small.online { background: #22c55e; }
+        .status-dot-small.offline { background: #ef4444; }
+        .status-dot-small.connecting { background: #eab308; animation: pulse 1s infinite; }
+        .badge-mini {
+            font-size: 0.55rem;
+            padding: 2px 6px;
             border-radius: 20px;
         }
-        .online-badge { background: #22c55e20; color: #166534; }
-        .pending-badge { background: #f9731620; color: #c2410c; }
-        .unread-badge { background: #ef444420; color: #dc2626; }
-        .delete-contact-btn-settings {
+        .online-badge-mini { background: #22c55e20; color: #166534; }
+        .pending-badge-mini { background: #f9731620; color: #c2410c; }
+        .unread-badge-mini { background: #ef444420; color: #dc2626; }
+        .delete-contact-icon {
             background: none;
             border: none;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
-            padding: 6px 10px;
+            padding: 4px 8px;
             border-radius: 20px;
             color: #94a3b8;
-            transition: all 0.2s;
         }
-        .delete-contact-btn-settings:hover {
+        .delete-contact-icon:hover {
             background: #fee2e2;
             color: #dc2626;
         }
-        .add-contact-btn-settings {
+        .add-contact-btn-dropdown {
             width: 100%;
             background: #eef2ff;
             border: none;
-            padding: 12px;
+            padding: 10px;
             border-radius: 28px;
             color: #4a90e2;
             font-weight: 600;
@@ -396,38 +423,45 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
+            font-size: 0.8rem;
         }
-        .empty-contacts-settings {
+        .empty-contacts-small {
             text-align: center;
-            padding: 30px;
+            padding: 24px;
             color: #94a3b8;
+            font-size: 0.75rem;
         }
 
         .emoji-picker {
             position: fixed;
-            bottom: 100px;
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 380px;
+            max-width: 360px;
             background: white;
-            border-radius: 28px;
-            padding: 16px;
+            border-radius: 24px;
+            padding: 12px;
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
+            gap: 8px;
             z-index: 1000;
             border: 1px solid #e2e8f0;
             box-shadow: 0 20px 35px -12px rgba(0,0,0,0.25);
         }
-        .emoji-picker span { font-size: 1.7rem; cursor: pointer; text-align: center; padding: 6px; }
+        .emoji-picker span { font-size: 1.5rem; cursor: pointer; text-align: center; padding: 4px; }
 
-        .message-image { max-width: 200px; max-height: 200px; border-radius: 12px; cursor: pointer; }
+        .message-image { max-width: 180px; max-height: 180px; border-radius: 12px; cursor: pointer; }
         .file-message { cursor: pointer; text-decoration: underline; }
-        .system-msg { background: #eef2ff; font-size: 0.7rem; text-align: center; padding: 6px 12px; border-radius: 20px; color: #475569; }
+        .system-msg { background: #eef2ff; font-size: 0.65rem; text-align: center; padding: 4px 10px; border-radius: 16px; color: #475569; }
 
-        @media (max-width: 560px) {
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        @media (max-width: 500px) {
             body { padding: 0; }
             .chat-container { max-width: 100%; height: 100vh; max-height: none; border-radius: 0; }
         }
@@ -446,6 +480,12 @@
             <button class="settings-icon-btn" id="settingsIconBtn">⚙️</button>
         </div>
         
+        <!-- Telefon numarası - küçük punto, başlıksız, tek satır -->
+        <div class="my-phone-mini">
+            <span id="miniPhoneDisplay">Numara ayarlanmamış</span>
+            <button class="copy-phone-mini" id="copyMiniPhoneBtn">📋 Kopyala</button>
+        </div>
+        
         <!-- Durum çubuğu -->
         <div class="chat-header" id="statusBar">
             ✅ Hazır
@@ -457,10 +497,10 @@
             <span id="typingIndicator" style="display:none;" class="typing-indicator">✍️ Yazıyor...</span>
         </div>
         
-        <!-- Mesaj alanı -->
+        <!-- Mesaj alanı - esnek, taşmaz -->
         <div class="messages-area" id="messagesArea"></div>
         
-        <!-- Mesaj giriş alanı -->
+        <!-- Mesaj giriş alanı - altta sabit -->
         <div class="input-container">
             <div class="message-input-row">
                 <input type="text" id="messageInput" placeholder="Mesaj yazın veya dosya sürükleyin..." disabled>
@@ -474,37 +514,33 @@
         </div>
     </div>
 
-    <!-- AYARLAR MENÜSÜ (İçinde Kişilerim Listesi) -->
-    <div id="settingsMenu" style="display: none;" class="settings-menu-overlay">
-        <div class="settings-menu">
-            <div class="settings-header">
+    <!-- AYARLAR AÇILIR KUTU (İçinde Kişilerim Listesi) -->
+    <div id="settingsDropdown" style="display: none;" class="settings-overlay">
+        <div class="settings-dropdown">
+            <div class="settings-dropdown-header">
                 <h3>⚙️ Ayarlar</h3>
                 <button class="close-settings" id="closeSettingsBtn">✕</button>
             </div>
-            <div class="settings-body">
-                <!-- Telefon Numarası Bölümü -->
-                <div class="settings-section">
-                    <div class="section-title">📱 TELEFON NUMARAM</div>
-                    <div class="phone-settings">
-                        <label>Numaranız (benzersiz kimliğiniz)</label>
-                        <div class="phone-input-group">
-                            <input type="tel" id="settingsPhoneInput" placeholder="Örn: 905551234567">
-                            <button class="save-phone-btn" id="savePhoneBtn">Kaydet</button>
-                        </div>
-                        <div style="margin-top: 8px;">
-                            <span class="current-phone" id="currentPhoneDisplay">-</span>
-                        </div>
+            <div class="settings-dropdown-body">
+                <!-- Telefon Numarası Ayarları -->
+                <div class="phone-settings-simple">
+                    <label>📱 Telefon Numaranız (Kimlik)</label>
+                    <div class="phone-input-flex">
+                        <input type="tel" id="settingsPhoneInput" placeholder="Örn: 905551234567">
+                        <button class="save-phone-small" id="savePhoneBtn">Kaydet</button>
+                    </div>
+                    <div style="margin-top: 6px;">
+                        <span class="current-phone-small" id="currentPhoneDisplay">-</span>
                     </div>
                 </div>
 
                 <!-- Kişilerim Listesi Bölümü -->
-                <div class="settings-section">
-                    <div class="section-title">📒 KİŞİLERİM</div>
-                    <div class="contacts-list-settings" id="contactsListSettings">
-                        <!-- Dinamik kişi listesi buraya gelecek -->
-                        <div class="empty-contacts-settings">📭 Henüz kişi eklenmemiş</div>
+                <div class="contacts-section">
+                    <div class="section-mini-title">📒 KİŞİLERİM</div>
+                    <div class="contacts-list-dropdown" id="contactsListDropdown">
+                        <div class="empty-contacts-small">📭 Henüz kişi eklenmemiş</div>
                     </div>
-                    <button class="add-contact-btn-settings" id="addContactSettingsBtn">
+                    <button class="add-contact-btn-dropdown" id="addContactDropdownBtn">
                         ➕ Yeni Kişi Ekle
                     </button>
                 </div>
@@ -513,16 +549,16 @@
     </div>
 
     <!-- YENİ KİŞİ EKLEME MODALI -->
-    <div id="addContactModal" style="display: none;" class="settings-menu-overlay">
-        <div class="settings-menu" style="max-width: 360px;">
-            <div class="settings-header">
-                <h3>➕ Yeni Kişi Ekle</h3>
-                <button class="close-settings" id="closeAddContactModalBtn">✕</button>
+    <div id="addContactModal" style="display: none;" class="settings-overlay">
+        <div class="settings-dropdown" style="max-width: 340px;">
+            <div class="settings-dropdown-header">
+                <h3>➕ Yeni Kişi</h3>
+                <button class="close-settings" id="closeAddModalBtn">✕</button>
             </div>
-            <div class="settings-body">
-                <input type="text" id="newContactName" placeholder="Kişi adı (Örn: Ahmet)" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:28px; margin-bottom:12px;">
-                <input type="tel" id="newContactPhone" placeholder="Telefon Numarası (Örn: 905551234567)" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:28px; margin-bottom:20px;">
-                <button class="save-phone-btn" id="confirmAddContactBtn" style="width:100%; padding:12px;">Ekle</button>
+            <div class="settings-dropdown-body">
+                <input type="text" id="newContactName" placeholder="Kişi adı" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:28px; margin-bottom:12px;">
+                <input type="tel" id="newContactPhone" placeholder="Telefon Numarası" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:28px; margin-bottom:20px;">
+                <button class="save-phone-small" id="confirmAddBtn" style="width:100%; padding:12px;">Ekle</button>
             </div>
         </div>
     </div>
@@ -538,6 +574,8 @@
         
         // DOM Elemanları
         const dom = {
+            miniPhoneDisplay: document.getElementById('miniPhoneDisplay'),
+            copyMiniPhoneBtn: document.getElementById('copyMiniPhoneBtn'),
             statusBar: document.getElementById('statusBar'),
             activeContactNameSpan: document.getElementById('activeContactName'),
             typingIndicator: document.getElementById('typingIndicator'),
@@ -548,18 +586,18 @@
             fileBtn: document.getElementById('fileBtn'),
             imageBtn: document.getElementById('imageBtn'),
             settingsIconBtn: document.getElementById('settingsIconBtn'),
-            settingsMenu: document.getElementById('settingsMenu'),
+            settingsDropdown: document.getElementById('settingsDropdown'),
             closeSettingsBtn: document.getElementById('closeSettingsBtn'),
             settingsPhoneInput: document.getElementById('settingsPhoneInput'),
             savePhoneBtn: document.getElementById('savePhoneBtn'),
             currentPhoneDisplay: document.getElementById('currentPhoneDisplay'),
-            contactsListSettings: document.getElementById('contactsListSettings'),
-            addContactSettingsBtn: document.getElementById('addContactSettingsBtn'),
+            contactsListDropdown: document.getElementById('contactsListDropdown'),
+            addContactDropdownBtn: document.getElementById('addContactDropdownBtn'),
             addContactModal: document.getElementById('addContactModal'),
-            closeAddContactModalBtn: document.getElementById('closeAddContactModalBtn'),
+            closeAddModalBtn: document.getElementById('closeAddModalBtn'),
             newContactName: document.getElementById('newContactName'),
             newContactPhone: document.getElementById('newContactPhone'),
-            confirmAddContactBtn: document.getElementById('confirmAddContactBtn')
+            confirmAddBtn: document.getElementById('confirmAddBtn')
         };
         
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
@@ -571,6 +609,7 @@
             if(!cleaned) return false;
             localStorage.setItem('p2p_my_phone', cleaned);
             myPhoneNumber = cleaned;
+            dom.miniPhoneDisplay.textContent = myPhoneNumber;
             dom.currentPhoneDisplay.textContent = myPhoneNumber;
             return true;
         }
@@ -585,19 +624,19 @@
             });
             peer.on('error', (err) => {
                 if(err.type === 'unavailable-id') {
-                    dom.statusBar.innerHTML = `⚠️ Bu numara kullanımda veya geçersiz. Ayarlardan değiştirin.`;
-                    openSettingsMenu();
+                    dom.statusBar.innerHTML = `⚠️ Bu numara kullanımda. Ayarlardan değiştirin.`;
+                    openSettingsDropdown();
                 } else {
-                    dom.statusBar.innerHTML = `⚠️ Bağlantı hatası: ${err.type}`;
+                    dom.statusBar.innerHTML = `⚠️ Hata: ${err.type}`;
                 }
             });
             peer.on('connection', handleIncoming);
         }
         
-        function openSettingsMenu() {
-            renderContactsInSettings();
+        function openSettingsDropdown() {
+            renderContactsInDropdown();
             dom.settingsPhoneInput.value = myPhoneNumber || '';
-            dom.settingsMenu.style.display = 'flex';
+            dom.settingsDropdown.style.display = 'flex';
         }
         
         function changePhoneNumber(newPhone) {
@@ -609,13 +648,13 @@
             // Verileri sıfırla (farklı kimlik olduğu için)
             contacts = []; messagesHistory = {}; pendingMessages = {}; contactStatus = {}; unreadCounts = {};
             saveContacts(); saveMessages();
-            updateActiveContactDisplay();
+            updateActiveDisplay();
             renderMessages();
             initPeerWithPhone(myPhoneNumber);
             return true;
         }
         
-        // Mesaj gönderme kuyruğu
+        // Mesaj gönderme
         function sendMessageWithQueue(contactId, type, content, fileData=null, mime='', fileName='') {
             if(!contactId) return false;
             const isNow = (activeContactId === contactId && isConnected && currentConnection);
@@ -701,7 +740,6 @@
             });
         }
         
-        // Kişi seçildiğinde otomatik bağlan
         function selectAndConnect(contactId, phone, name) {
             if(activeContactId === contactId && isConnected) return;
             if(currentConnection) disconnectCurrent();
@@ -759,7 +797,7 @@
             if(!dom.messagesArea) return;
             dom.messagesArea.innerHTML = '';
             if(!activeContactId) {
-                dom.messagesArea.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:30px;">👈 Ayarlar menüsünden kişi ekleyip sohbet başlatın</div>';
+                dom.messagesArea.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">👈 Ayarlardan kişi ekleyip sohbet başlatın</div>';
                 return;
             }
             let history = messagesHistory[activeContactId] || [];
@@ -771,7 +809,7 @@
                 else if(msg.msgType === 'image') contentHtml = `<div class="message-content"><img src="${msg.fileData}" class="message-image" onclick="window.open('${msg.fileData}','_blank')"></div>`;
                 else if(msg.msgType === 'file') contentHtml = `<div class="message-content file-message" onclick="downloadFile('${msg.fileData}', '${msg.content}')">📎 ${escapeHtml(msg.content)}</div>`;
                 let readHtml = msg.isSent ? `<div class="read-status ${msg.read ? 'read' : ''}">${msg.read ? '✓✓ Okundu' : '✓ Gönderildi'}</div>` : '';
-                div.innerHTML = contentHtml + `<div style="font-size:0.6rem; color:#94a3b8;">${timeStr}</div>` + readHtml;
+                div.innerHTML = contentHtml + `<div style="font-size:0.55rem; color:#94a3b8;">${timeStr}</div>` + readHtml;
                 dom.messagesArea.appendChild(div);
             });
             dom.messagesArea.scrollTop = dom.messagesArea.scrollHeight;
@@ -786,7 +824,7 @@
             dom.messagesArea.scrollTop=dom.messagesArea.scrollHeight;
         }
         
-        function updateActiveContactDisplay() {
+        function updateActiveDisplay() {
             dom.activeContactNameSpan.innerText = activeContactName || "Seçili kişi yok";
         }
         
@@ -807,17 +845,16 @@
             dom.statusBar.innerHTML = `✅ ${contact.name} ile bağlantı aktif`;
         }
         
-        // Veri kaydetme
-        function saveContacts() { localStorage.setItem('p2p_contacts_v4', JSON.stringify(contacts)); }
-        function saveMessages() { localStorage.setItem('p2p_messages_v4', JSON.stringify(messagesHistory)); }
-        function loadContacts() { let stored=localStorage.getItem('p2p_contacts_v4'); contacts=stored?JSON.parse(stored):[]; contacts.forEach(c=>{ if(!contactStatus[c.id]) contactStatus[c.id]='offline'; if(!pendingMessages[c.id]) pendingMessages[c.id]=[]; }); }
-        function loadMessages() { let stored=localStorage.getItem('p2p_messages_v4'); messagesHistory=stored?JSON.parse(stored):{}; }
+        function saveContacts() { localStorage.setItem('p2p_contacts_v5', JSON.stringify(contacts)); }
+        function saveMessages() { localStorage.setItem('p2p_messages_v5', JSON.stringify(messagesHistory)); }
+        function loadContacts() { let stored=localStorage.getItem('p2p_contacts_v5'); contacts=stored?JSON.parse(stored):[]; contacts.forEach(c=>{ if(!contactStatus[c.id]) contactStatus[c.id]='offline'; if(!pendingMessages[c.id]) pendingMessages[c.id]=[]; }); }
+        function loadMessages() { let stored=localStorage.getItem('p2p_messages_v5'); messagesHistory=stored?JSON.parse(stored):{}; }
         
-        // Ayarlar menüsünde kişileri göster (numaralandırılmış)
-        function renderContactsInSettings() {
-            if(!dom.contactsListSettings) return;
+        // Açılır kutuda kişileri göster
+        function renderContactsInDropdown() {
+            if(!dom.contactsListDropdown) return;
             if(contacts.length === 0) {
-                dom.contactsListSettings.innerHTML = '<div class="empty-contacts-settings">📭 Henüz kişi eklenmemiş</div>';
+                dom.contactsListDropdown.innerHTML = '<div class="empty-contacts-small">📭 Henüz kişi eklenmemiş</div>';
                 return;
             }
             let html = '';
@@ -828,49 +865,49 @@
                 let pendingCount = pendingMessages[contact.id]?.length || 0;
                 let unreadCount = unreadCounts[contact.id] || 0;
                 html += `
-                    <div class="contact-settings-item ${isActive ? 'active' : ''}" data-id="${contact.id}" data-phone="${contact.phoneNumber}" data-name="${escapeHtml(contact.name)}">
-                        <div class="contact-settings-info">
-                            <div class="contact-settings-number">${index + 1}</div>
-                            <div class="contact-settings-details">
-                                <div class="contact-settings-name">
+                    <div class="contact-dropdown-item ${isActive ? 'active' : ''}" data-id="${contact.id}" data-phone="${contact.phoneNumber}" data-name="${escapeHtml(contact.name)}">
+                        <div class="contact-info-flex">
+                            <div class="contact-number-circle">${index + 1}</div>
+                            <div class="contact-details">
+                                <div class="contact-name-small">
                                     ${escapeHtml(contact.name)}
-                                    ${status === 'connected' ? '<span class="contact-badge online-badge">🟢 Çevrimiçi</span>' : ''}
-                                    ${pendingCount ? `<span class="contact-badge pending-badge">📬 ${pendingCount}</span>` : ''}
-                                    ${unreadCount ? `<span class="contact-badge unread-badge">🔔 ${unreadCount}</span>` : ''}
+                                    ${status === 'connected' ? '<span class="badge-mini online-badge-mini">🟢 Çevrimiçi</span>' : ''}
+                                    ${pendingCount ? `<span class="badge-mini pending-badge-mini">📬 ${pendingCount}</span>` : ''}
+                                    ${unreadCount ? `<span class="badge-mini unread-badge-mini">🔔 ${unreadCount}</span>` : ''}
                                 </div>
-                                <div class="contact-settings-phone">📞 ${escapeHtml(contact.phoneNumber)}</div>
+                                <div class="contact-phone-small">📞 ${escapeHtml(contact.phoneNumber)}</div>
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="contact-status-dot ${statusClass}"></div>
-                            <button class="delete-contact-btn-settings" data-delete="${contact.id}">🗑</button>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="status-dot-small ${statusClass}"></div>
+                            <button class="delete-contact-icon" data-delete="${contact.id}">🗑</button>
                         </div>
                     </div>
                 `;
             });
-            dom.contactsListSettings.innerHTML = html;
-            // Tıklama ile seçme ve bağlanma
-            document.querySelectorAll('#contactsListSettings .contact-settings-item').forEach(item => {
+            dom.contactsListDropdown.innerHTML = html;
+            // Tıklama ile seçme
+            document.querySelectorAll('#contactsListDropdown .contact-dropdown-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    if(e.target.classList.contains('delete-contact-btn-settings')) return;
+                    if(e.target.classList.contains('delete-contact-icon')) return;
                     let id = item.dataset.id, phone = item.dataset.phone, name = item.dataset.name;
                     selectAndConnect(id, phone, name);
-                    dom.settingsMenu.style.display = 'none';
+                    dom.settingsDropdown.style.display = 'none';
                 });
             });
             // Silme butonları
-            document.querySelectorAll('.delete-contact-btn-settings').forEach(btn => {
+            document.querySelectorAll('.delete-contact-icon').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     let id = btn.dataset.delete;
                     deleteContactById(id);
-                    renderContactsInSettings();
+                    renderContactsInDropdown();
                 });
             });
         }
         
         function deleteContactById(id) {
-            if(confirm('Kişiyi silmek mesaj geçmişini ve bekleyen mesajları siler.')) {
+            if(confirm('Kişiyi silmek mesaj geçmişini siler.')) {
                 if(activeContactId===id) {
                     if(currentConnection) currentConnection.close();
                     activeContactId=null; activeContactName="";
@@ -882,7 +919,7 @@
                 delete contactStatus[id]; delete pendingMessages[id]; delete messagesHistory[id]; delete unreadCounts[id];
                 saveContacts(); saveMessages();
                 renderMessages();
-                if(dom.settingsMenu.style.display === 'flex') renderContactsInSettings();
+                if(dom.settingsDropdown.style.display === 'flex') renderContactsInDropdown();
             }
         }
         
@@ -903,16 +940,15 @@
             pendingMessages[newId] = [];
             saveContacts();
             dom.addContactModal.style.display = 'none';
-            if(dom.settingsMenu.style.display === 'flex') renderContactsInSettings();
+            if(dom.settingsDropdown.style.display === 'flex') renderContactsInDropdown();
         }
         
         window.downloadFile = (url,name)=>{ let a=document.createElement('a'); a.href=url; a.download=name; a.click(); };
         
-        // Başlangıç
         function init() {
             let stored=getStoredPhone();
-            if(stored) { myPhoneNumber=stored; dom.currentPhoneDisplay.textContent=myPhoneNumber; initPeerWithPhone(myPhoneNumber); }
-            else { openSettingsMenu(); }
+            if(stored) { myPhoneNumber=stored; dom.miniPhoneDisplay.textContent=myPhoneNumber; dom.currentPhoneDisplay.textContent=myPhoneNumber; initPeerWithPhone(myPhoneNumber); }
+            else { openSettingsDropdown(); }
             loadContacts(); loadMessages(); renderMessages();
             if(Notification.permission==='default') Notification.requestPermission();
         }
@@ -920,21 +956,20 @@
         // Event listeners
         dom.sendButton.onclick = sendText;
         dom.messageInput.onkeypress = (e) => { if(e.key==='Enter' && activeContactId) sendText(); };
+        dom.copyMiniPhoneBtn.onclick = () => { if(myPhoneNumber){ navigator.clipboard.writeText(myPhoneNumber); dom.copyMiniPhoneBtn.textContent = '✅'; setTimeout(()=>dom.copyMiniPhoneBtn.textContent='📋 Kopyala',1500); } };
         
-        // Ayarlar menüsü
-        dom.settingsIconBtn.onclick = openSettingsMenu;
-        dom.closeSettingsBtn.onclick = () => { dom.settingsMenu.style.display = 'none'; };
+        dom.settingsIconBtn.onclick = openSettingsDropdown;
+        dom.closeSettingsBtn.onclick = () => { dom.settingsDropdown.style.display = 'none'; };
         dom.savePhoneBtn.onclick = () => {
             let newPhone = dom.settingsPhoneInput.value.trim().replace(/\s/g, '');
             if(!newPhone) { alert('Geçerli bir telefon numarası girin'); return; }
             changePhoneNumber(newPhone);
-            dom.settingsMenu.style.display = 'none';
+            dom.settingsDropdown.style.display = 'none';
         };
-        dom.addContactSettingsBtn.onclick = openAddContactModal;
+        dom.addContactDropdownBtn.onclick = openAddContactModal;
         
-        // Yeni kişi ekleme modalı
-        dom.closeAddContactModalBtn.onclick = () => { dom.addContactModal.style.display = 'none'; };
-        dom.confirmAddContactBtn.onclick = addNewContact;
+        dom.closeAddModalBtn.onclick = () => { dom.addContactModal.style.display = 'none'; };
+        dom.confirmAddBtn.onclick = addNewContact;
         
         // Emoji, dosya, resim
         dom.emojiBtn.onclick = () => {
