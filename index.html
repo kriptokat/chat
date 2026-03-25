@@ -401,6 +401,42 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.25);
         }
         .emoji-picker span { font-size: 1.5rem; cursor: pointer; text-align: center; padding: 5px; }
+        
+        /* Progress Bar Stilleri */
+        .progress-container {
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+            width: 200px;
+        }
+        .progress-bar {
+            background: #4a90e2;
+            height: 8px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .file-message-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+        .retry-btn {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            margin-top: 4px;
+        }
 
         @keyframes pulse {
             0% { opacity: 0.5; transform: scale(0.8); }
@@ -412,16 +448,6 @@
             color: #94a3b8;
             padding: 40px;
             font-size: 0.9rem;
-        }
-        .retry-btn {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 0.65rem;
-            cursor: pointer;
-            margin-left: 8px;
         }
     </style>
 </head>
@@ -492,7 +518,7 @@
             <h3>📞 Telefon Numaranız</h3>
             <input type="tel" id="editPhoneInput" placeholder="+905551234567 şeklinde">
             <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanacak.</div>
-                        <div class="modal-buttons">
+            <div class="modal-buttons">
                 <button class="modal-cancel" id="editPhoneCancel">Vazgeç</button>
                 <button class="modal-save" id="editPhoneSave">Kaydet</button>
             </div>
@@ -501,7 +527,8 @@
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
-        // Daha güvenilir STUN sunucuları
+        const CHUNK_SIZE = 64 * 1024; // 64KB parçalar halinde gönder
+        
         const PEER_CONFIG = {
             debug: 0,
             config: {
@@ -528,7 +555,7 @@
         let unreadCounts = {};
         let currentSidebarMode = 'settings';
         let emojiPicker = null;
-        let reconnectTimeout = null;
+        let fileTransferProgress = {};
 
         const elements = {
             statusDiv: document.getElementById('status'),
@@ -642,6 +669,130 @@
             }
         }
 
+        // Büyük dosya gönderimi için chunk sistemi
+        async function sendLargeFile(contactId, file, type, fileName, fileData) {
+            if (!currentConnection || !isConnected || activeContactId !== contactId) {
+                queueMessage(contactId, { type, content: fileName, fileData, mime: file.type, name: fileName, isLargeFile: true });
+                return false;
+            }
+            
+            const totalChunks = Math.ceil(fileData.length / CHUNK_SIZE);
+            let currentChunk = 0;
+            
+            // Transfer başlangıç bildirimi
+            currentConnection.send({
+                type: 'file_start',
+                name: fileName,
+                mime: file.type,
+                totalChunks: totalChunks,
+                fileSize: fileData.length
+            });
+            
+            // Parçaları gönder
+            for (let i = 0; i < totalChunks; i++) {
+                const start = i * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, fileData.length);
+                const chunk = fileData.slice(start, end);
+                
+                currentConnection.send({
+                    type: 'file_chunk',
+                    chunkIndex: i,
+                    totalChunks: totalChunks,
+                    data: chunk,
+                    name: fileName
+                });
+                
+                currentChunk = i + 1;
+                const progress = Math.round((currentChunk / totalChunks) * 100);
+                updateFileProgress(fileName, progress);
+                
+                // Küçük bir gecikme ile gönderim yap (aşırı yüklenmeyi önlemek için)
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            // Transfer bitiş bildirimi
+            currentConnection.send({
+                type: 'file_end',
+                name: fileName
+            });
+            
+            addMessageToHistory(contactId, fileName, 'Ben', true, type, fileData, file.type);
+            return true;
+        }
+
+        function updateFileProgress(fileName, progress) {
+            const progressElement = document.getElementById(`progress_${fileName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+            if (progressElement) {
+                const bar = progressElement.querySelector('.progress-bar');
+                const text = progressElement.querySelector('.progress-text');
+                if (bar) bar.style.width = `${progress}%`;
+                if (text) text.textContent = `${progress}% gönderildi`;
+            }
+        }
+
+        function sendWithProgress(file, type) {
+            if (!activeContactId) {
+                alert('Önce bir kişi seçin');
+                return;
+            }
+            
+            const reader = new FileReader();
+            const fileName = file.name;
+            const fileSize = file.size;
+            const isLargeFile = fileSize > 1024 * 1024; // 1MB üzeri büyük dosya
+            
+            // Progress mesajı göster
+            const progressId = `progress_${fileName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const tempMsg = {
+                content: fileName,
+                isSent: true,
+                msgType: type,
+                isPending: true,
+                showProgress: true,
+                progressId: progressId,
+                fileSize: fileSize
+            };
+            
+            if (!messagesHistory[activeContactId]) messagesHistory[activeContactId] = [];
+            const msgIndex = messagesHistory[activeContactId].length;
+            messagesHistory[activeContactId].push(tempMsg);
+            renderMessagesForActiveContact();
+            
+            reader.onload = async (e) => {
+                const fileData = e.target.result;
+                
+                // Progress gösterimini güncelle
+                fileTransferProgress[fileName] = 0;
+                
+                if (isLargeFile) {
+                    await sendLargeFile(activeContactId, file, type, fileName, fileData);
+                } else {
+                    sendMessageWithQueue(activeContactId, type, '', fileData, file.type, fileName);
+                }
+                
+                // Progress'i kaldır ve mesajı güncelle
+                setTimeout(() => {
+                    const history = messagesHistory[activeContactId];
+                    if (history && history[msgIndex]) {
+                        history[msgIndex].isPending = false;
+                        history[msgIndex].showProgress = false;
+                        renderMessagesForActiveContact();
+                    }
+                }, 500);
+            };
+            
+            reader.onerror = () => {
+                addSystemMessage(`${fileName} gönderilemedi. Tekrar deneyin.`);
+                const history = messagesHistory[activeContactId];
+                if (history && history[msgIndex]) {
+                    history[msgIndex].isFailed = true;
+                    renderMessagesForActiveContact();
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
         function handleIncomingConnection(incoming) {
             let contact = contacts.find(c => c.phoneNumber === incoming.peer);
             if (!contact) {
@@ -674,6 +825,9 @@
             renderSidebarContent();
         }
 
+        // Dosya alımı için chunk birleştirme
+        let incomingFileTransfers = {};
+
         function setupConnectionEvents(connection, contactId, contactName) {
             connection.on('open', () => {
                 if (activeContactId === contactId) {
@@ -691,10 +845,35 @@
                 if (activeContactId === contactId && currentConnection === connection) {
                     if (data.type === 'text') {
                         addMessageToHistory(contactId, data.text, contactName, false, 'text');
-                    } else if (data.type === 'file') {
-                        addMessageToHistory(contactId, data.name, contactName, false, 'file', data.data, data.mime);
-                    } else if (data.type === 'image') {
-                        addMessageToHistory(contactId, data.name, contactName, false, 'image', data.data, data.mime);
+                    } else if (data.type === 'file_start') {
+                        // Büyük dosya transferi başladı
+                        incomingFileTransfers[data.name] = {
+                            chunks: [],
+                            totalChunks: data.totalChunks,
+                            mime: data.mime,
+                            fileName: data.name,
+                            fileSize: data.fileSize
+                        };
+                    } else if (data.type === 'file_chunk') {
+                        // Dosya parçası alındı
+                        if (incomingFileTransfers[data.name]) {
+                            incomingFileTransfers[data.name].chunks[data.chunkIndex] = data.data;
+                            const progress = Math.round(((data.chunkIndex + 1) / data.totalChunks) * 100);
+                            updateIncomingFileProgress(data.name, progress);
+                        }
+                    } else if (data.type === 'file_end') {
+                        // Dosya transferi tamamlandı
+                        const transfer = incomingFileTransfers[data.name];
+                        if (transfer) {
+                            const fullData = transfer.chunks.join('');
+                            addMessageToHistory(contactId, transfer.fileName, contactName, false, 
+                                transfer.mime.startsWith('image/') ? 'image' : 'file', 
+                                fullData, transfer.mime);
+                            delete incomingFileTransfers[data.name];
+                        }
+                    } else if (data.type === 'file' || data.type === 'image') {
+                        // Küçük dosya transferi (eski sistem)
+                        addMessageToHistory(contactId, data.name, contactName, false, data.type, data.data, data.mime);
                     } else if (data.type === 'typing') {
                         elements.chatTypingIndicator.style.display = 'inline-block';
                         if (typingTimeout) clearTimeout(typingTimeout);
@@ -724,6 +903,16 @@
                     updateStatus(`⚠️ ${contactName} ile bağlantı hatası`, true);
                 }
             });
+        }
+
+        function updateIncomingFileProgress(fileName, progress) {
+            const progressElement = document.getElementById(`incoming_progress_${fileName.replace(/[^a-zA-Z0-9]/g, '_')}`);
+            if (progressElement) {
+                const bar = progressElement.querySelector('.progress-bar');
+                const text = progressElement.querySelector('.progress-text');
+                if (bar) bar.style.width = `${progress}%`;
+                if (text) text.textContent = `${progress}% alındı`;
+            }
         }
 
         function connectToContact(id, phoneNumber, name) {
@@ -758,7 +947,6 @@
                 currentConnection = newConn;
                 setupConnectionEvents(currentConnection, id, name);
                 
-                // 15 saniye timeout
                 setTimeout(() => {
                     if (currentConnection === newConn && !isConnected) {
                         updateContactStatus(id, 'offline');
@@ -799,10 +987,18 @@
             if (isConnectedNow) {
                 try {
                     let msg = { type };
-                    if (type === 'text') msg.text = content;
-                    else { msg.name = fileName; msg.data = fileData; msg.mime = mime; }
-                    currentConnection.send(msg);
-                    addMessageToHistory(contactId, content || fileName, 'Ben', true, type, fileData, mime);
+                    if (type === 'text') {
+                        msg.text = content;
+                        currentConnection.send(msg);
+                        addMessageToHistory(contactId, content, 'Ben', true, type);
+                    } else {
+                        // Küçük dosyalar için direkt gönderim
+                        msg.name = fileName;
+                        msg.data = fileData;
+                        msg.mime = mime;
+                        currentConnection.send(msg);
+                        addMessageToHistory(contactId, fileName, 'Ben', true, type, fileData, mime);
+                    }
                     return true;
                 } catch (err) {
                     queueMessage(contactId, { type, content, fileData, mime, name: fileName });
@@ -828,8 +1024,13 @@
             for (let msg of pending) {
                 try {
                     let payload = { type: msg.type };
-                    if (msg.type === 'text') payload.text = msg.content;
-                    else { payload.name = msg.name; payload.data = msg.fileData; payload.mime = msg.mime; }
+                    if (msg.type === 'text') {
+                        payload.text = msg.content;
+                    } else {
+                        payload.name = msg.name;
+                        payload.data = msg.fileData;
+                        payload.mime = msg.mime;
+                    }
                     currentConnection.send(payload);
                     addMessageToHistory(contactId, msg.content || msg.name, 'Ben', true, msg.type, msg.fileData, msg.mime);
                 } catch (err) {
@@ -882,20 +1083,53 @@
                 elements.messagesArea.innerHTML = '<div class="no-contact-selected">💬 Henüz mesaj yok</div>';
                 return;
             }
-            history.forEach((msg) => {
+            history.forEach((msg, idx) => {
                 let div = document.createElement('div');
                 div.className = `message ${msg.isSent ? 'sent' : 'received'}`;
                 let timeStr = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 let contentHtml = '';
-                if (msg.msgType === 'text') contentHtml = `<div class="message-content">${!msg.isSent ? `<strong>${escapeHtml(msg.sender)}:</strong> ` : ''}${escapeHtml(msg.content)}</div>`;
-                else if (msg.msgType === 'image') contentHtml = `<div class="message-content"><img src="${msg.fileData}" style="max-width:200px; max-height:200px; border-radius:12px; cursor:pointer;" onclick="window.open('${msg.fileData}','_blank')"></div>`;
-                else if (msg.msgType === 'file') contentHtml = `<div class="message-content" style="cursor:pointer;" onclick="downloadFile('${msg.fileData}', '${msg.content}')">📎 ${escapeHtml(msg.content)}</div>`;
+                
+                if (msg.msgType === 'text') {
+                    contentHtml = `<div class="message-content">${!msg.isSent ? `<strong>${escapeHtml(msg.sender)}:</strong> ` : ''}${escapeHtml(msg.content)}</div>`;
+                } else if (msg.msgType === 'image') {
+                    contentHtml = `<div class="message-content"><img src="${msg.fileData}" style="max-width:200px; max-height:200px; border-radius:12px; cursor:pointer;" onclick="window.open('${msg.fileData}','_blank')"></div>`;
+                } else if (msg.msgType === 'file') {
+                    if (msg.isPending && msg.showProgress) {
+                        const progressId = `progress_${msg.content.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                        contentHtml = `<div class="message-content file-message-content">
+                            <div>📎 ${escapeHtml(msg.content)} (${(msg.fileSize / 1024 / 1024).toFixed(2)} MB)</div>
+                            <div id="${progressId}" class="progress-container">
+                                <div class="progress-bar" style="width: 0%"></div>
+                                <div class="progress-text">0% gönderiliyor...</div>
+                            </div>
+                        </div>`;
+                    } else if (msg.isFailed) {
+                        contentHtml = `<div class="message-content file-message-content">
+                            <div>❌ ${escapeHtml(msg.content)} (gönderilemedi)</div>
+                            <button class="retry-btn" onclick="retrySendFile('${idx}')">🔄 Tekrar Dene</button>
+                        </div>`;
+                    } else {
+                        contentHtml = `<div class="message-content" style="cursor:pointer;" onclick="downloadFile('${msg.fileData}', '${msg.content}')">📎 ${escapeHtml(msg.content)}</div>`;
+                    }
+                }
+                
                 div.innerHTML = contentHtml + `<div class="message-time">${timeStr}</div>`;
                 elements.messagesArea.appendChild(div);
             });
             elements.messagesArea.scrollTop = elements.messagesArea.scrollHeight;
             if (unreadCounts[activeContactId]) { delete unreadCounts[activeContactId]; renderSidebarContent(); }
         }
+
+        window.retrySendFile = (msgIndex) => {
+            const history = messagesHistory[activeContactId];
+            if (history && history[msgIndex] && history[msgIndex].isFailed) {
+                const msg = history[msgIndex];
+                history[msgIndex].isFailed = false;
+                history[msgIndex].isPending = true;
+                renderMessagesForActiveContact();
+                sendMessageWithQueue(activeContactId, msg.msgType, msg.content, msg.fileData, msg.mime, msg.content);
+            }
+        };
 
         function updateChatHeaderStatus() {
             if (!activeContactId) {
@@ -948,8 +1182,8 @@
                             <span>${myPhoneNumber && myPhoneNumber !== "" ? escapeHtml(myPhoneNumber) : "Henüz ayarlanmadı"}</span>
                             <button class="mini-btn primary" id="editPhoneSettingsBtn">${myPhoneNumber ? "✏️ Düzenle" : "➕ Ekle"}</button>
                         </div>
-                        <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanır. Dilerseniz telefon numarası dışında bir ID belirleyebilirsiniz.</div>
-                                            </div>
+                        <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanır.</div>
+                    </div>
                 `;
                 document.getElementById('editPhoneSettingsBtn')?.addEventListener('click', () => showPhoneEditModal());
             } else {
@@ -1102,26 +1336,79 @@
             messagesHistory = stored ? JSON.parse(stored) : {};
         }
 
-        function sendWithProgress(file, type, callback) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                callback(100);
-                sendMessageWithQueue(activeContactId, type, '', e.target.result, file.type, file.name);
-            };
-            reader.readAsDataURL(file);
-        }
-
         window.downloadFile = (url, name) => { let a = document.createElement('a'); a.href = url; a.download = name; a.click(); };
 
+        // Emoji gönderme - düzeltilmiş
+        let emojiPickerActive = false;
         elements.emojiBtn.onclick = () => {
-            if (emojiPicker) { emojiPicker.remove(); emojiPicker = null; return; }
-            emojiPicker = document.createElement('div'); emojiPicker.className = 'emoji-picker';
-            let emojis = ['😀','😂','🥰','😎','😢','😡','👍','❤️','🔥','🎉','🙏','💯','✨','🍕','☕','🏆','😍','🥺','🤣','💪'];
-            emojis.forEach(e => { let span = document.createElement('span'); span.textContent = e; span.onclick = () => { sendMessageWithQueue(activeContactId, 'text', e); emojiPicker.remove(); emojiPicker = null; }; emojiPicker.appendChild(span); });
+            if (emojiPicker) {
+                emojiPicker.remove();
+                emojiPicker = null;
+                emojiPickerActive = false;
+                return;
+            }
+            emojiPicker = document.createElement('div');
+            emojiPicker.className = 'emoji-picker';
+            let emojis = ['😀','😂','🥰','😎','😢','😡','👍','❤️','🔥','🎉','🙏','💯','✨','🍕','☕','🏆','😍','🥺','🤣','💪','👋','🤔','😴','🥳','🎈','💎','⭐','🌙','🌸','🐱'];
+            emojis.forEach(emoji => {
+                let span = document.createElement('span');
+                span.textContent = emoji;
+                span.style.cursor = 'pointer';
+                span.style.fontSize = '1.5rem';
+                span.style.padding = '5px';
+                span.onclick = (e) => {
+                    e.stopPropagation();
+                    if (activeContactId) {
+                        sendMessageWithQueue(activeContactId, 'text', emoji);
+                    } else {
+                        alert('Önce bir kişi seçin');
+                    }
+                    if (emojiPicker) {
+                        emojiPicker.remove();
+                        emojiPicker = null;
+                    }
+                    emojiPickerActive = false;
+                };
+                emojiPicker.appendChild(span);
+            });
             document.body.appendChild(emojiPicker);
+            emojiPickerActive = true;
+            
+            // Dışarı tıklanınca kapat
+            setTimeout(() => {
+                document.addEventListener('click', function closePicker(e) {
+                    if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== elements.emojiBtn) {
+                        emojiPicker.remove();
+                        emojiPicker = null;
+                        emojiPickerActive = false;
+                        document.removeEventListener('click', closePicker);
+                    }
+                });
+            }, 100);
         };
-        elements.fileBtn.onclick = () => { let input = document.createElement('input'); input.type = 'file'; input.onchange = (e) => { if (e.target.files[0]) sendWithProgress(e.target.files[0], 'file', (p) => {}); }; input.click(); };
-        elements.imageBtn.onclick = () => { let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = (e) => { if (e.target.files[0]) sendWithProgress(e.target.files[0], 'image', (p) => {}); }; input.click(); };
+        
+        elements.fileBtn.onclick = () => { 
+            let input = document.createElement('input'); 
+            input.type = 'file'; 
+            input.onchange = (e) => { 
+                if (e.target.files && e.target.files[0]) {
+                    sendWithProgress(e.target.files[0], 'file');
+                }
+            }; 
+            input.click(); 
+        };
+        
+        elements.imageBtn.onclick = () => { 
+            let input = document.createElement('input'); 
+            input.type = 'file'; 
+            input.accept = 'image/*'; 
+            input.onchange = (e) => { 
+                if (e.target.files && e.target.files[0]) {
+                    sendWithProgress(e.target.files[0], 'image');
+                }
+            }; 
+            input.click(); 
+        };
         
         elements.sendButton.onclick = sendTextMessage;
         if (elements.messageInput) elements.messageInput.onkeypress = (e) => { if (e.key === 'Enter' && activeContactId) sendTextMessage(); };
