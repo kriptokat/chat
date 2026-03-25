@@ -49,9 +49,14 @@
             align-items: center;
             gap: 12px;
         }
-        .logo-icon { font-size: 1.8rem; }
-        .header-text h2 { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
-        .sub-title { font-size: 0.6rem; opacity: 0.85; margin-top: 2px; }
+        .logo-icon {
+            font-size: 1.8rem;
+        }
+        .header-text h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
         .header-buttons {
             display: flex;
             gap: 12px;
@@ -60,8 +65,7 @@
             background: rgba(255,255,255,0.2);
             border: none;
             color: white;
-            font-size: 1.3rem;
-            padding: 8px 12px;
+            padding: 8px 16px;
             border-radius: 40px;
             cursor: pointer;
             transition: all 0.2s;
@@ -84,34 +88,6 @@
             flex-shrink: 0;
             font-size: 0.75rem;
             font-weight: 500;
-        }
-
-        .my-info-bar {
-            background: #f8fafc;
-            padding: 8px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eef2f6;
-            flex-shrink: 0;
-        }
-        .my-phone-label {
-            font-size: 0.65rem;
-            color: #64748b;
-        }
-        .my-phone-value {
-            font-family: monospace;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #1e293b;
-        }
-        .copy-phone-btn {
-            background: #e2e8f0;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.65rem;
-            cursor: pointer;
         }
 
         .current-chat-info {
@@ -205,7 +181,7 @@
             cursor: pointer;
         }
 
-        /* Modal Menüler */
+        /* AYARLAR MODALI */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -240,68 +216,193 @@
         .modal-save { background: #4a90e2; color: white; flex: 1; padding: 10px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; }
         .modal-cancel { background: #e2e8f0; color: #334155; flex: 1; border: none; border-radius: 30px; font-weight: 600; cursor: pointer; }
         
-        /* Kişiler Listesi Menüsü - Modern Tasarım */
-        .contacts-list-modal {
-            max-height: 450px;
-            overflow-y: auto;
+        /* KİŞİLERİM AÇILIR KUTU (Dropdown) - Modern, numaralandırmalı */
+        .contacts-dropdown-wrapper {
+            position: relative;
+            margin: 0;
         }
-        .contact-modal-item {
+        .contacts-trigger-btn {
+            width: 100%;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e293b;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+        .contacts-trigger-btn:hover {
+            background: #eef2ff;
+            border-color: #4a90e2;
+        }
+        .contacts-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2);
+            max-height: 380px;
+            overflow-y: auto;
+            z-index: 200;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+        .contacts-dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Köşede kapatma butonu */
+        .dropdown-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 0;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 14px 18px;
+            border-bottom: 1px solid #eef2f6;
+            background: #fafcff;
+            border-radius: 24px 24px 0 0;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 5;
         }
-        .contact-modal-info {
+        .dropdown-header h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .close-dropdown-btn {
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .close-dropdown-btn:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .contacts-list-scroll {
+            padding: 8px 0;
+        }
+        .dropdown-contact-item {
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .dropdown-contact-item:hover {
+            background: #f8fafc;
+        }
+        .dropdown-contact-item.active {
+            background: #eef2ff;
+            border-left: 3px solid #4a90e2;
+        }
+        .contact-number-badge {
+            background: #e2e8f0;
+            color: #475569;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .dropdown-contact-info {
             flex: 1;
         }
-        .contact-modal-name {
+        .dropdown-contact-name {
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
         }
-        .contact-modal-phone {
-            font-size: 0.7rem;
+        .dropdown-contact-phone {
+            font-size: 0.65rem;
             color: #64748b;
             font-family: monospace;
-            margin-top: 4px;
+            margin-top: 3px;
         }
-        .contact-status-badge {
+        .dropdown-contact-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .status-dot.online { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .status-dot.offline { background: #ef4444; }
+        .status-dot.connecting { background: #eab308; animation: pulse 1s infinite; }
+        .status-dot.pending { background: #f97316; animation: pulse 1s infinite; }
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+        .contact-badge-sm {
             font-size: 0.6rem;
             padding: 2px 8px;
             border-radius: 20px;
+            background: #e2e8f0;
         }
-        .status-online { background: #22c55e20; color: #166534; }
-        .status-offline { background: #e2e8f0; color: #475569; }
-        .status-connecting { background: #eab30820; color: #b45309; }
-        .contact-delete-btn {
-            background: #fee2e2;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 24px;
-            color: #dc2626;
-            cursor: pointer;
-            font-size: 0.7rem;
-            font-weight: 500;
-        }
-        .empty-contacts {
-            text-align: center;
-            padding: 40px;
-            color: #94a3b8;
-        }
-        .add-contact-btn-modal {
-            margin-top: 16px;
-            background: #4a90e2;
+        .pending-badge-sm {
+            background: #f97316;
             color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 30px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+        }
+        .unread-badge-sm {
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+        }
+        .add-contact-quick {
+            padding: 14px 18px;
+            border-top: 1px solid #eef2f6;
+            background: #fafcff;
+            color: #4a90e2;
             font-weight: 600;
-            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 0 0 24px 24px;
+        }
+        .add-contact-quick:hover {
+            background: #eff6ff;
         }
 
         .emoji-picker {
@@ -338,10 +439,9 @@
         <!-- Üst Alan: Logo + Ayarlar ve Kişilerim tuşları -->
         <div class="app-header">
             <div class="logo-area">
-                <div class="logo-icon">📞</div>
+                <div class="logo-icon">💬</div>
                 <div class="header-text">
                     <h2>SEYFİÇET</h2>
-                    <div class="sub-title">🔐 Telefon Numarası ile P2P</div>
                 </div>
             </div>
             <div class="header-buttons">
@@ -350,18 +450,9 @@
             </div>
         </div>
         
-        <!-- Durum çubuğu (basitleştirilmiş) -->
+        <!-- Durum çubuğu -->
         <div class="chat-header" id="statusBar">
             ✅ Hazır
-        </div>
-        
-        <!-- Benim numaram gösterimi -->
-        <div class="my-info-bar">
-            <div>
-                <div class="my-phone-label">📱 BENİM NUMARAM</div>
-                <div class="my-phone-value" id="myPeerId">Ayarlanıyor...</div>
-            </div>
-            <button class="copy-phone-btn" id="copyIdBtn">📋 Kopyala</button>
         </div>
         
         <!-- Aktif sohbet bilgisi -->
@@ -395,21 +486,25 @@
             <input type="tel" id="settingsPhoneInput" placeholder="Telefon numarası (Örn: 905551234567)">
             <div class="modal-buttons">
                 <button class="modal-cancel" id="settingsCancelBtn">Vazgeç</button>
-                <button class="modal-save" id="settingsSaveBtn">Kaydet ve Yeniden Başlat</button>
+                <button class="modal-save" id="settingsSaveBtn">Kaydet</button>
             </div>
         </div>
     </div>
 
-    <!-- KİŞİLERİM MODALI (Kişi listesi ve yönetim) -->
-    <div id="contactsModal" style="display: none;" class="modal-overlay">
-        <div class="modal-content" style="max-width: 400px; width: 90%;">
-            <h3>📒 Kişilerim</h3>
-            <div id="contactsModalList" class="contacts-list-modal">
-                <!-- Dinamik kişi listesi buraya gelecek -->
-            </div>
-            <button class="add-contact-btn-modal" id="addContactFromModalBtn">➕ Yeni Kişi Ekle</button>
-            <div class="modal-buttons" style="margin-top: 12px;">
-                <button class="modal-cancel" id="contactsModalCloseBtn">Kapat</button>
+    <!-- KİŞİLERİM AÇILIR KUTU (Dropdown) - Köşede kapatma butonu, numaralandırmalı -->
+    <div id="contactsDropdown" class="contacts-dropdown-wrapper" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+        <div style="width: 90%; max-width: 400px; margin: auto; position: relative;">
+            <div class="contacts-dropdown-menu" style="display: block; position: relative; max-height: 500px;">
+                <div class="dropdown-header">
+                    <h4>📒 Kişilerim</h4>
+                    <button class="close-dropdown-btn" id="closeContactsDropdownBtn">✕</button>
+                </div>
+                <div class="contacts-list-scroll" id="contactsDropdownList">
+                    <!-- Kişiler buraya dinamik olarak eklenecek -->
+                </div>
+                <div class="add-contact-quick" id="addContactQuickBtn">
+                    ➕ Yeni Kişi Ekle
+                </div>
             </div>
         </div>
     </div>
@@ -438,8 +533,6 @@
         
         // DOM Elemanları
         const dom = {
-            myPeerId: document.getElementById('myPeerId'),
-            copyIdBtn: document.getElementById('copyIdBtn'),
             statusBar: document.getElementById('statusBar'),
             activeContactNameSpan: document.getElementById('activeContactName'),
             typingIndicator: document.getElementById('typingIndicator'),
@@ -455,10 +548,10 @@
             settingsPhoneInput: document.getElementById('settingsPhoneInput'),
             settingsCancelBtn: document.getElementById('settingsCancelBtn'),
             settingsSaveBtn: document.getElementById('settingsSaveBtn'),
-            contactsModal: document.getElementById('contactsModal'),
-            contactsModalList: document.getElementById('contactsModalList'),
-            addContactFromModalBtn: document.getElementById('addContactFromModalBtn'),
-            contactsModalCloseBtn: document.getElementById('contactsModalCloseBtn'),
+            contactsDropdown: document.getElementById('contactsDropdown'),
+            contactsDropdownList: document.getElementById('contactsDropdownList'),
+            closeContactsDropdownBtn: document.getElementById('closeContactsDropdownBtn'),
+            addContactQuickBtn: document.getElementById('addContactQuickBtn'),
             addContactModal: document.getElementById('addContactModal'),
             newContactName: document.getElementById('newContactName'),
             newContactPhone: document.getElementById('newContactPhone'),
@@ -475,7 +568,6 @@
             if(!cleaned) return false;
             localStorage.setItem('p2p_my_phone', cleaned);
             myPhoneNumber = cleaned;
-            dom.myPeerId.textContent = myPhoneNumber;
             return true;
         }
         function getStoredPhone() { return localStorage.getItem('p2p_my_phone'); }
@@ -716,48 +808,47 @@
         function loadContacts() { let stored=localStorage.getItem('p2p_contacts_v3'); contacts=stored?JSON.parse(stored):[]; contacts.forEach(c=>{ if(!contactStatus[c.id]) contactStatus[c.id]='offline'; if(!pendingMessages[c.id]) pendingMessages[c.id]=[]; }); }
         function loadMessages() { let stored=localStorage.getItem('p2p_messages_v3'); messagesHistory=stored?JSON.parse(stored):{}; }
         
-        // Kişileri Modal'da göster
-        function renderContactsModal() {
-            if(!dom.contactsModalList) return;
+        // Kişileri Açılır Kutuda Göster (Numaralandırılmış)
+        function renderContactsDropdown() {
+            if(!dom.contactsDropdownList) return;
             if(contacts.length === 0) {
-                dom.contactsModalList.innerHTML = '<div class="empty-contacts">📭 Henüz kişi eklenmemiş<br>➕ Yeni Kişi Ekle butonu ile ekleyin</div>';
+                dom.contactsDropdownList.innerHTML = '<div style="padding: 40px; text-align:center; color:#94a3b8;">📭 Henüz kişi eklenmemiş<br>➕ Yeni Kişi Ekle</div>';
                 return;
             }
             let html = '';
-            contacts.forEach(contact => {
+            contacts.forEach((contact, index) => {
                 let status = contactStatus[contact.id] || 'offline';
-                let statusText = status === 'connected' ? 'Çevrimiçi' : (status === 'connecting' ? 'Bağlanıyor...' : 'Çevrimdışı');
-                let statusClass = status === 'connected' ? 'status-online' : (status === 'connecting' ? 'status-connecting' : 'status-offline');
+                let statusClass = status === 'connected' ? 'online' : (status === 'connecting' ? 'connecting' : (status === 'pending' ? 'pending' : 'offline'));
+                let isActive = activeContactId === contact.id;
+                let pendingCount = pendingMessages[contact.id]?.length || 0;
+                let unreadCount = unreadCounts[contact.id] || 0;
                 html += `
-                    <div class="contact-modal-item" data-id="${contact.id}" data-phone="${contact.phoneNumber}" data-name="${escapeHtml(contact.name)}">
-                        <div class="contact-modal-info">
-                            <div class="contact-modal-name">
-                                ${escapeHtml(contact.name)}
-                                <span class="contact-status-badge ${statusClass}">${statusText}</span>
+                    <div class="dropdown-contact-item ${isActive ? 'active' : ''}" data-id="${contact.id}" data-phone="${contact.phoneNumber}" data-name="${escapeHtml(contact.name)}">
+                        <div style="display: flex; align-items: center; flex: 1;">
+                            <div class="contact-number-badge">${index + 1}</div>
+                            <div class="dropdown-contact-info">
+                                <div class="dropdown-contact-name">
+                                    ${escapeHtml(contact.name)}
+                                    ${status === 'connected' ? '<span class="contact-badge-sm" style="background:#22c55e20; color:#166534;">🟢 Çevrimiçi</span>' : ''}
+                                    ${pendingCount ? `<span class="pending-badge-sm">📬 ${pendingCount}</span>` : ''}
+                                    ${unreadCount ? `<span class="unread-badge-sm">🔔 ${unreadCount}</span>` : ''}
+                                </div>
+                                <div class="dropdown-contact-phone">📞 ${escapeHtml(contact.phoneNumber)}</div>
                             </div>
-                            <div class="contact-modal-phone">📞 ${escapeHtml(contact.phoneNumber)}</div>
                         </div>
-                        <button class="contact-delete-btn" data-delete="${contact.id}">🗑 Sil</button>
+                        <div class="dropdown-contact-status">
+                            <div class="status-dot ${statusClass}"></div>
+                        </div>
                     </div>
                 `;
             });
-            dom.contactsModalList.innerHTML = html;
-            // Tıklama ile seçme ve bağlanma
-            document.querySelectorAll('.contact-modal-item').forEach(item => {
-                item.style.cursor = 'pointer';
-                item.addEventListener('click', (e) => {
-                    if(e.target.classList.contains('contact-delete-btn')) return;
+            dom.contactsDropdownList.innerHTML = html;
+            // Tıklama ile seçme
+            document.querySelectorAll('#contactsDropdownList .dropdown-contact-item').forEach(item => {
+                item.addEventListener('click', () => {
                     let id = item.dataset.id, phone = item.dataset.phone, name = item.dataset.name;
                     selectAndConnect(id, phone, name);
-                    dom.contactsModal.style.display = 'none';
-                });
-            });
-            document.querySelectorAll('.contact-delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    let id = btn.dataset.delete;
-                    deleteContactById(id);
-                    renderContactsModal();
+                    dom.contactsDropdown.style.display = 'none';
                 });
             });
         }
@@ -775,7 +866,7 @@
                 delete contactStatus[id]; delete pendingMessages[id]; delete messagesHistory[id]; delete unreadCounts[id];
                 saveContacts(); saveMessages();
                 renderMessages();
-                if(dom.contactsModal.style.display === 'flex') renderContactsModal();
+                if(dom.contactsDropdown.style.display === 'flex') renderContactsDropdown();
             }
         }
         
@@ -796,7 +887,7 @@
             pendingMessages[newId] = [];
             saveContacts();
             dom.addContactModal.style.display = 'none';
-            if(dom.contactsModal.style.display === 'flex') renderContactsModal();
+            if(dom.contactsDropdown.style.display === 'flex') renderContactsDropdown();
         }
         
         window.downloadFile = (url,name)=>{ let a=document.createElement('a'); a.href=url; a.download=name; a.click(); };
@@ -804,14 +895,13 @@
         // Başlangıç
         function init() {
             let stored=getStoredPhone();
-            if(stored) { myPhoneNumber=stored; dom.myPeerId.textContent=myPhoneNumber; initPeerWithPhone(myPhoneNumber); }
+            if(stored) { myPhoneNumber=stored; initPeerWithPhone(myPhoneNumber); }
             else { showSettingsModal(); }
             loadContacts(); loadMessages(); renderMessages();
             if(Notification.permission==='default') Notification.requestPermission();
         }
         
         // Event listeners
-        dom.copyIdBtn.onclick = () => { if(myPhoneNumber){ navigator.clipboard.writeText(myPhoneNumber); dom.copyIdBtn.textContent='✅'; setTimeout(()=>dom.copyIdBtn.textContent='📋 Kopyala',1500); } };
         dom.sendButton.onclick = sendText;
         dom.messageInput.onkeypress = (e) => { if(e.key==='Enter' && activeContactId) sendText(); };
         
@@ -823,13 +913,15 @@
             if(!newPhone) { alert('Geçerli bir telefon numarası girin'); return; }
             changePhoneNumber(newPhone);
             dom.settingsModal.style.display = 'none';
-            renderContactsModal();
         };
         
-        // Kişilerim menüsü
-        dom.contactsMenuBtn.onclick = () => { renderContactsModal(); dom.contactsModal.style.display = 'flex'; };
-        dom.contactsModalCloseBtn.onclick = () => { dom.contactsModal.style.display = 'none'; };
-        dom.addContactFromModalBtn.onclick = () => { openAddContactModal(); };
+        // Kişilerim butonu - açılır kutuyu göster
+        dom.contactsMenuBtn.onclick = () => {
+            renderContactsDropdown();
+            dom.contactsDropdown.style.display = 'flex';
+        };
+        dom.closeContactsDropdownBtn.onclick = () => { dom.contactsDropdown.style.display = 'none'; };
+        dom.addContactQuickBtn.onclick = () => { openAddContactModal(); };
         
         // Yeni kişi ekleme modalı
         dom.addContactModalCancel.onclick = () => { dom.addContactModal.style.display = 'none'; };
