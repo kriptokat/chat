@@ -12,22 +12,30 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* TAM EKRAN - Mobilde kesinlikle boşluk yok */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #F1F5F9;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 0;
-            margin: 0;
         }
 
         /* Modern ana container - mobilde tam ekran */
         .app-wrapper {
             width: 100%;
-            height: 100vh;
-            height: 100dvh;
+            height: 100%;
             background: transparent;
             display: flex;
             justify-content: center;
@@ -48,6 +56,10 @@
 
         /* Masaüstü görünümü - kart efekti */
         @media (min-width: 768px) {
+            html, body {
+                position: relative;
+                overflow: auto;
+            }
             body {
                 padding: 20px;
                 background: linear-gradient(145deg, #E2E8F0 0%, #CBD5E1 100%);
@@ -71,14 +83,29 @@
             }
         }
 
-        /* Mobilde kesinlikle boşluk yok - tam ekran */
+        /* Mobilde kesinlikle boşluk yok - safe-area desteği ile */
         @media (max-width: 767px) {
-            body, .app-wrapper, .chat-container {
+            html, body, .app-wrapper, .chat-container {
                 margin: 0;
                 padding: 0;
-                height: 100vh;
-                height: 100dvh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
                 border-radius: 0;
+                overflow: hidden;
+            }
+            
+            /* Safe-area (çentikli telefonlar) için padding ekleme - ama boşluk olmasın */
+            .app-header {
+                padding-top: env(safe-area-inset-top, 0);
+            }
+            
+            .input-container {
+                padding-bottom: env(safe-area-inset-bottom, 0);
             }
         }
 
