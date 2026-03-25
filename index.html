@@ -73,9 +73,6 @@
             justify-content: center;
             transition: all 0.2s;
         }
-        .icon-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
 
         .connection-bar {
             background: #4a90e2;
@@ -84,6 +81,12 @@
             text-align: center;
             font-size: 0.7rem;
             flex-shrink: 0;
+        }
+        .connection-bar.error {
+            background: #dc2626;
+        }
+        .connection-bar.success {
+            background: #22c55e;
         }
 
         .current-chat-header {
@@ -105,7 +108,7 @@
             height: 10px;
             border-radius: 50%;
         }
-        .chat-status-light.online { background: #22c55e; }
+        .chat-status-light.online { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
         .chat-status-light.offline { background: #94a3b8; }
         .chat-status-light.connecting { background: #eab308; animation: pulse 1s infinite; }
         .chat-contact-name {
@@ -148,12 +151,6 @@
             margin-top: 2px;
             margin-right: 4px;
         }
-        .read-status {
-            font-size: 0.55rem;
-            margin-top: 2px;
-            color: #cbd5e1;
-        }
-        .read-status.read { color: #22c55e; }
 
         .input-container {
             flex-shrink: 0;
@@ -182,6 +179,10 @@
             border-radius: 28px;
             font-weight: 600;
             cursor: pointer;
+        }
+        #sendButton:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
         }
         .action-buttons-row {
             display: flex;
@@ -283,6 +284,12 @@
             margin-top: 6px;
             text-align: center;
         }
+        .info-text {
+            font-size: 0.6rem;
+            color: #22c55e;
+            margin-top: 6px;
+            text-align: center;
+        }
         .contacts-list-sidebar {
             margin-top: 16px;
         }
@@ -376,8 +383,8 @@
             gap: 10px;
             margin-top: 16px;
         }
-        .modal-save { background: #4a90e2; color: white; flex: 1; padding: 8px; border-radius: 25px; border: none; }
-        .modal-cancel { background: #e2e8f0; color: #334155; flex: 1; border: none; border-radius: 25px; }
+        .modal-save { background: #4a90e2; color: white; flex: 1; padding: 8px; border-radius: 25px; border: none; cursor: pointer; }
+        .modal-cancel { background: #e2e8f0; color: #334155; flex: 1; border: none; border-radius: 25px; cursor: pointer; }
 
         .emoji-picker {
             position: fixed;
@@ -395,22 +402,6 @@
         }
         .emoji-picker span { font-size: 1.5rem; cursor: pointer; text-align: center; padding: 5px; }
 
-        .drag-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(74,144,226,0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 4000;
-            color: white;
-            font-size: 1.2rem;
-            pointer-events: none;
-        }
-
         @keyframes pulse {
             0% { opacity: 0.5; transform: scale(0.8); }
             100% { opacity: 1; transform: scale(1.2); }
@@ -422,6 +413,16 @@
             padding: 40px;
             font-size: 0.9rem;
         }
+        .retry-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -431,7 +432,7 @@
                 <div class="logo-icon">💬</div>
                 <div class="header-text">
                     <h2>SEYFİÇET</h2>
-                    <div class="sub-title">🔒 P2P Mesajlaşma (Telefon No ile)</div>
+                    <div class="sub-title">🔒 Telefon No ile P2P</div>
                 </div>
             </div>
             <div class="header-buttons">
@@ -439,7 +440,7 @@
                 <button class="icon-btn" id="contactsBtn">👥</button>
             </div>
         </div>
-        <div class="connection-bar" id="status">Telefon numarası bekleniyor...</div>
+        <div class="connection-bar" id="status">Başlatılıyor...</div>
 
         <div class="current-chat-header" id="currentChatHeader" style="display: none;">
             <div class="chat-contact-info">
@@ -455,7 +456,7 @@
 
         <div class="input-container" id="inputContainer" style="display: none;">
             <div class="message-input-row">
-                <input type="text" id="messageInput" placeholder="Mesaj yazın veya dosya sürükleyin..." disabled>
+                <input type="text" id="messageInput" placeholder="Mesaj yazın..." disabled>
                 <button id="sendButton" disabled>Gönder</button>
             </div>
             <div class="action-buttons-row">
@@ -478,7 +479,7 @@
         <div class="modal-content">
             <h3>➕ Yeni Kişi Ekle</h3>
             <input type="text" id="contactNameInput" placeholder="Kişi adı">
-            <input type="tel" id="contactPhoneInput" placeholder="Telefon Numarası (örn: +905551234567)">
+            <input type="tel" id="contactPhoneInput" placeholder="Telefon Numarası (örn: 905551234567)">
             <div class="modal-buttons">
                 <button class="modal-cancel" id="modalCancelBtn">Vazgeç</button>
                 <button class="modal-save" id="modalSaveBtn">Kaydet</button>
@@ -489,8 +490,9 @@
     <div id="editPhoneModal" style="display: none;" class="modal-overlay">
         <div class="modal-content">
             <h3>📞 Telefon Numaranız</h3>
-            <input type="tel" id="editPhoneInput" placeholder="+905551234567">
-            <div class="warning-text">⚠️ Bu numara sizin kimliğiniz olacak. Karşı taraf size bu numara ile bağlanacak.</div>
+            <input type="tel" id="editPhoneInput" placeholder="905551234567 (Başında 0 olmadan)">
+            <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanacak.</div>
+            <div class="info-text">💡 Örnek: 905551234567 (Türkiye için 9 ile başlayan 12 haneli)</div>
             <div class="modal-buttons">
                 <button class="modal-cancel" id="editPhoneCancel">Vazgeç</button>
                 <button class="modal-save" id="editPhoneSave">Kaydet</button>
@@ -500,13 +502,34 @@
 
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
+        // Daha güvenilir STUN sunucuları
+        const PEER_CONFIG = {
+            debug: 0,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun.stunprotocol.org:3478' },
+                    { urls: 'stun:stun.voipbuster.com:3478' }
+                ]
+            }
+        };
+
         let myPhoneNumber = "";
-        let peer, currentConnection, isConnected = false;
-        let activeContactId = null, activeContactName = "";
-        let contacts = [], messagesHistory = {}, pendingMessages = {}, contactStatus = {};
-        let unreadCounts = {}, typingTimeouts = {};
+        let peer = null;
+        let currentConnection = null;
+        let isConnected = false;
+        let activeContactId = null;
+        let activeContactName = "";
+        let contacts = [];
+        let messagesHistory = {};
+        let pendingMessages = {};
+        let contactStatus = {};
+        let unreadCounts = {};
         let currentSidebarMode = 'settings';
         let emojiPicker = null;
+        let reconnectTimeout = null;
 
         const elements = {
             statusDiv: document.getElementById('status'),
@@ -526,8 +549,7 @@
             closeSidebar: document.getElementById('closeSidebar'),
             emojiBtn: document.getElementById('emojiBtn'),
             fileBtn: document.getElementById('fileBtn'),
-            imageBtn: document.getElementById('imageBtn'),
-            chatContainer: document.getElementById('chatContainer')
+            imageBtn: document.getElementById('imageBtn')
         };
 
         function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m] || m)); }
@@ -537,8 +559,15 @@
             else if (Notification.permission !== 'denied') Notification.requestPermission();
         }
 
+        function updateStatus(message, isError = false, isSuccess = false) {
+            elements.statusDiv.innerHTML = message;
+            elements.statusDiv.classList.remove('error', 'success');
+            if (isError) elements.statusDiv.classList.add('error');
+            if (isSuccess) elements.statusDiv.classList.add('success');
+        }
+
         function loadPhoneNumber() {
-            let saved = localStorage.getItem('seyficet_my_phone');
+            let saved = localStorage.getItem('seyficet_phone');
             if (saved && saved.trim() !== "") {
                 myPhoneNumber = saved.trim();
                 return true;
@@ -550,59 +579,99 @@
         function savePhoneNumber(phone) {
             if (!phone || phone.trim() === "") {
                 myPhoneNumber = "";
-                localStorage.removeItem('seyficet_my_phone');
+                localStorage.removeItem('seyficet_phone');
                 if (peer) peer.destroy();
+                peer = null;
+                updateStatus('⚠️ Telefon numarası ayarlanmadı', true);
                 return false;
             }
-            myPhoneNumber = phone.trim();
-            localStorage.setItem('seyficet_my_phone', myPhoneNumber);
+            let cleanPhone = phone.trim().replace(/\s/g, '');
+            myPhoneNumber = cleanPhone;
+            localStorage.setItem('seyficet_phone', myPhoneNumber);
             initPeer();
             return true;
         }
 
         function initPeer() {
             if (!myPhoneNumber || myPhoneNumber === "") {
-                elements.statusDiv.innerHTML = '⚠️ Lütfen ayarlardan telefon numaranızı girin';
+                updateStatus('⚠️ Lütfen ayarlardan telefon numaranızı girin', true);
                 return;
             }
-            if (peer) peer.destroy();
-            peer = new Peer(myPhoneNumber, { debug: 0, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-            peer.on('open', () => {
-                elements.statusDiv.innerHTML = `✅ ${myPhoneNumber} aktif, bağlantıya hazır`;
-            });
-            peer.on('error', (err) => {
-                if (err.type === 'unavailable-id') {
-                    elements.statusDiv.innerHTML = `❌ Bu telefon numarası zaten kullanımda! Lütfen farklı bir numara girin.`;
-                } else {
-                    elements.statusDiv.innerHTML = `⚠️ Bağlantı hatası: ${err.type}`;
-                }
-            });
-            peer.on('connection', handleIncoming);
+            
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            
+            updateStatus(`🔄 ${myPhoneNumber} bağlanıyor...`);
+            
+            try {
+                peer = new Peer(myPhoneNumber, PEER_CONFIG);
+                
+                peer.on('open', (id) => {
+                    updateStatus(`✅ ${id} aktif - Bağlantıya hazır`, false, true);
+                });
+                
+                peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    if (err.type === 'unavailable-id') {
+                        updateStatus(`❌ "${myPhoneNumber}" numarası kullanımda! Lütfen farklı bir numara girin.`, true);
+                    } else if (err.type === 'network') {
+                        updateStatus(`⚠️ Ağ bağlantı sorunu. Yeniden bağlanılıyor...`, true);
+                        setTimeout(() => initPeer(), 3000);
+                    } else {
+                        updateStatus(`⚠️ Bağlantı hatası: ${err.type || 'bilinmeyen'}`, true);
+                    }
+                });
+                
+                peer.on('connection', handleIncomingConnection);
+                
+                peer.on('disconnected', () => {
+                    updateStatus(`⚠️ Bağlantı kesildi, yeniden bağlanılıyor...`, true);
+                    setTimeout(() => {
+                        if (peer) peer.reconnect();
+                    }, 2000);
+                });
+                
+                peer.on('close', () => {
+                    updateStatus(`❌ Bağlantı kapandı`, true);
+                });
+                
+            } catch (e) {
+                console.error('Peer init error:', e);
+                updateStatus(`❌ Başlatma hatası: ${e.message}`, true);
+            }
         }
 
-        function handleIncoming(incoming) {
+        function handleIncomingConnection(incoming) {
             let contact = contacts.find(c => c.phoneNumber === incoming.peer);
             if (!contact) {
                 incoming.close();
                 return;
             }
+            
             if (currentConnection && isConnected) {
                 incoming.close();
                 return;
             }
-            if (currentConnection) currentConnection.close();
+            
+            if (currentConnection) {
+                currentConnection.close();
+            }
+            
             currentConnection = incoming;
             activeContactId = contact.id;
             activeContactName = contact.name;
             elements.currentChatName.innerText = contact.name;
-            renderMessagesForActiveContact();
+            
             setupConnectionEvents(currentConnection, contact.id, contact.name);
             updateContactStatus(contact.id, 'connected');
             setConnectedState(true);
-            elements.statusDiv.innerHTML = `✅ ${contact.name} (${contact.phoneNumber}) ile bağlantı aktif`;
+            updateStatus(`✅ ${contact.name} (${contact.phoneNumber}) ile bağlantı kuruldu`, false, true);
             addSystemMessage(`${contact.name} sizinle bağlantı kurdu.`);
             flushPendingMessages(contact.id);
             showChatInterface(true);
+            renderMessagesForActiveContact();
             renderSidebarContent();
         }
 
@@ -612,11 +681,12 @@
                     isConnected = true;
                     setConnectedState(true);
                     updateContactStatus(contactId, 'connected');
-                    elements.statusDiv.innerHTML = `✅ ${contactName} ile bağlantı aktif`;
-                    addSystemMessage(`${contactName} ile görüşmeye hazırsınız.`);
+                    updateStatus(`✅ ${contactName} ile görüşme başladı`, false, true);
+                    addSystemMessage(`${contactName} ile bağlantı hazır.`);
                     flushPendingMessages(contactId);
                 }
             });
+            
             let typingTimeout = null;
             connection.on('data', (data) => {
                 if (activeContactId === contactId && currentConnection === connection) {
@@ -633,6 +703,7 @@
                     }
                 }
             });
+            
             connection.on('close', () => {
                 if (activeContactId === contactId && currentConnection === connection) {
                     addSystemMessage(`${contactName} bağlantıyı kapattı.`);
@@ -640,14 +711,18 @@
                     setConnectedState(false);
                     currentConnection = null;
                     isConnected = false;
+                    updateStatus(`❌ ${contactName} ile bağlantı kesildi`);
                 }
             });
-            connection.on('error', () => {
+            
+            connection.on('error', (err) => {
+                console.error('Connection error:', err);
                 if (activeContactId === contactId && currentConnection === connection) {
                     updateContactStatus(contactId, 'offline');
                     setConnectedState(false);
                     currentConnection = null;
                     isConnected = false;
+                    updateStatus(`⚠️ ${contactName} ile bağlantı hatası`, true);
                 }
             });
         }
@@ -657,34 +732,50 @@
                 alert('Lütfen önce ayarlardan kendi telefon numaranızı girin.');
                 return;
             }
+            
             if (activeContactId === id && isConnected) {
                 disconnectCurrent();
                 return;
             }
+            
             if (currentConnection) disconnectCurrent();
+            
             activeContactId = id;
             activeContactName = name;
             elements.currentChatName.innerText = name;
             updateChatHeaderStatus();
             renderMessagesForActiveContact();
             updateContactStatus(id, 'connecting');
-            elements.statusDiv.innerHTML = `🔄 ${name} (${phoneNumber}) bağlanıyor...`;
-            let newConn = peer.connect(phoneNumber);
-            if (!newConn) {
-                updateContactStatus(id, 'offline');
-                return;
-            }
-            currentConnection = newConn;
-            setupConnectionEvents(currentConnection, id, name);
-            setTimeout(() => {
-                if (currentConnection === newConn && !isConnected) {
+            updateStatus(`🔄 ${name} (${phoneNumber}) bağlanıyor...`);
+            
+            try {
+                let newConn = peer.connect(phoneNumber);
+                if (!newConn) {
                     updateContactStatus(id, 'offline');
-                    addSystemMessage(`${name} bağlantı zaman aşımı`);
-                    setConnectedState(false);
-                    currentConnection = null;
+                    updateStatus(`❌ ${name} bağlanamadı`, true);
+                    return;
                 }
-            }, 10000);
-            showChatInterface(true);
+                
+                currentConnection = newConn;
+                setupConnectionEvents(currentConnection, id, name);
+                
+                // 15 saniye timeout
+                setTimeout(() => {
+                    if (currentConnection === newConn && !isConnected) {
+                        updateContactStatus(id, 'offline');
+                        addSystemMessage(`${name} bağlantı zaman aşımı. Karşı taraf çevrimiçi mi?`);
+                        setConnectedState(false);
+                        currentConnection = null;
+                        updateStatus(`⏰ ${name} bağlantı zaman aşımı`, true);
+                    }
+                }, 15000);
+                
+                showChatInterface(true);
+            } catch (e) {
+                console.error('Connect error:', e);
+                updateContactStatus(id, 'offline');
+                updateStatus(`❌ Bağlantı hatası: ${e.message}`, true);
+            }
         }
 
         function disconnectCurrent() {
@@ -698,13 +789,14 @@
                 currentConnection = null;
                 isConnected = false;
                 setConnectedState(false);
-                elements.statusDiv.innerHTML = '❌ Bağlantı kesildi';
+                updateStatus('❌ Bağlantı kesildi');
             }
         }
 
         function sendMessageWithQueue(contactId, type, content, fileData = null, mime = '', fileName = '') {
             if (!contactId) return false;
             const isConnectedNow = (activeContactId === contactId && isConnected && currentConnection);
+            
             if (isConnectedNow) {
                 try {
                     let msg = { type };
@@ -747,12 +839,11 @@
                 }
             }
             if (pending.length) addSystemMessage(`${pending.length} bekleyen mesaj gönderildi.`);
-            updateContactStatus(contactId, 'connected');
         }
 
         function addMessageToHistory(contactId, content, sender, isSent, msgType, fileData = null, mime = '', isPending = false) {
             if (!messagesHistory[contactId]) messagesHistory[contactId] = [];
-            let msg = { content, sender, isSent, msgType, fileData, mime, isPending, read: isSent, timestamp: Date.now() };
+            let msg = { content, sender, isSent, msgType, fileData, mime, isPending, timestamp: Date.now() };
             messagesHistory[contactId].push(msg);
             saveMessagesHistory();
             if (activeContactId === contactId) renderMessagesForActiveContact();
@@ -800,8 +891,7 @@
                 if (msg.msgType === 'text') contentHtml = `<div class="message-content">${!msg.isSent ? `<strong>${escapeHtml(msg.sender)}:</strong> ` : ''}${escapeHtml(msg.content)}</div>`;
                 else if (msg.msgType === 'image') contentHtml = `<div class="message-content"><img src="${msg.fileData}" style="max-width:200px; max-height:200px; border-radius:12px; cursor:pointer;" onclick="window.open('${msg.fileData}','_blank')"></div>`;
                 else if (msg.msgType === 'file') contentHtml = `<div class="message-content" style="cursor:pointer;" onclick="downloadFile('${msg.fileData}', '${msg.content}')">📎 ${escapeHtml(msg.content)}</div>`;
-                let readHtml = msg.isSent ? `<div class="read-status ${msg.read ? 'read' : ''}">${msg.read ? '✓✓ Okundu' : '✓ Gönderildi'}</div>` : '';
-                div.innerHTML = contentHtml + `<div class="message-time">${timeStr}</div>` + readHtml;
+                div.innerHTML = contentHtml + `<div class="message-time">${timeStr}</div>`;
                 elements.messagesArea.appendChild(div);
             });
             elements.messagesArea.scrollTop = elements.messagesArea.scrollHeight;
@@ -860,11 +950,10 @@
                             <button class="mini-btn primary" id="editPhoneSettingsBtn">${myPhoneNumber ? "✏️ Düzenle" : "➕ Ekle"}</button>
                         </div>
                         <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanır.</div>
+                        <div class="info-text">💡 Örnek: 905551234567 (Türkiye için 9 ile başlayan 12 haneli)</div>
                     </div>
                 `;
-                document.getElementById('editPhoneSettingsBtn')?.addEventListener('click', () => {
-                    showPhoneEditModal();
-                });
+                document.getElementById('editPhoneSettingsBtn')?.addEventListener('click', () => showPhoneEditModal());
             } else {
                 elements.sidebarTitle.innerText = '📒 Kişilerim';
                 let contactsHtml = '<div class="contacts-list-sidebar">';
@@ -925,7 +1014,7 @@
             const saveBtn = document.getElementById('editPhoneSave');
             const cancelBtn = document.getElementById('editPhoneCancel');
             const saveHandler = () => {
-                let newPhone = input.value.trim();
+                let newPhone = input.value.trim().replace(/\s/g, '');
                 if (!newPhone) {
                     alert('Lütfen geçerli bir telefon numarası girin');
                     return;
@@ -956,7 +1045,7 @@
             const cancelBtn = document.getElementById('modalCancelBtn');
             const saveHandler = () => {
                 let name = nameInput.value.trim();
-                let phone = phoneInput.value.trim();
+                let phone = phoneInput.value.trim().replace(/\s/g, '');
                 if (!name || !phone) { alert('Lütfen tüm bilgileri doldurun'); return; }
                 if (contacts.some(c => c.phoneNumber === phone)) { alert('Bu telefon numarası zaten mevcut'); return; }
                 if (phone === myPhoneNumber) { alert('Kendi numaranızı ekleyemezsiniz'); return; }
@@ -1002,22 +1091,21 @@
             }
         }
 
-        function saveContacts() { localStorage.setItem('seyficet_contacts', JSON.stringify(contacts)); }
-        function saveMessagesHistory() { localStorage.setItem('seyficet_messages', JSON.stringify(messagesHistory)); }
+        function saveContacts() { localStorage.setItem('seyficet_contacts_v2', JSON.stringify(contacts)); }
+        function saveMessagesHistory() { localStorage.setItem('seyficet_messages_v2', JSON.stringify(messagesHistory)); }
         function loadContacts() {
-            let stored = localStorage.getItem('seyficet_contacts');
+            let stored = localStorage.getItem('seyficet_contacts_v2');
             contacts = stored ? JSON.parse(stored) : [];
             contacts.forEach(c => { if (!contactStatus[c.id]) contactStatus[c.id] = 'offline'; if (!pendingMessages[c.id]) pendingMessages[c.id] = []; });
             renderSidebarContent();
         }
         function loadMessagesHistory() {
-            let stored = localStorage.getItem('seyficet_messages');
+            let stored = localStorage.getItem('seyficet_messages_v2');
             messagesHistory = stored ? JSON.parse(stored) : {};
         }
 
         function sendWithProgress(file, type, callback) {
             const reader = new FileReader();
-            reader.onprogress = (e) => { if (e.lengthComputable) callback(e.loaded / e.total * 100); };
             reader.onload = (e) => {
                 callback(100);
                 sendMessageWithQueue(activeContactId, type, '', e.target.result, file.type, file.name);
@@ -1037,9 +1125,6 @@
         elements.fileBtn.onclick = () => { let input = document.createElement('input'); input.type = 'file'; input.onchange = (e) => { if (e.target.files[0]) sendWithProgress(e.target.files[0], 'file', (p) => {}); }; input.click(); };
         elements.imageBtn.onclick = () => { let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = (e) => { if (e.target.files[0]) sendWithProgress(e.target.files[0], 'image', (p) => {}); }; input.click(); };
         
-        elements.chatContainer.addEventListener('dragover', (e) => { e.preventDefault(); let overlay = document.createElement('div'); overlay.className = 'drag-overlay'; overlay.innerHTML = '📁 Dosyayı Bırakın'; document.body.appendChild(overlay); setTimeout(() => overlay.remove(), 500); });
-        elements.chatContainer.addEventListener('drop', (e) => { e.preventDefault(); let files = e.dataTransfer.files; if (files.length && activeContactId) sendWithProgress(files[0], files[0].type.startsWith('image/') ? 'image' : 'file', (p) => {}); });
-        
         elements.sendButton.onclick = sendTextMessage;
         if (elements.messageInput) elements.messageInput.onkeypress = (e) => { if (e.key === 'Enter' && activeContactId) sendTextMessage(); };
         elements.settingsBtn.onclick = () => openSidebar('settings');
@@ -1054,7 +1139,7 @@
         loadMessagesHistory();
         const hasPhone = loadPhoneNumber();
         if (hasPhone) initPeer();
-        else elements.statusDiv.innerHTML = '⚠️ Lütfen ayarlardan telefon numaranızı girin';
+        else updateStatus('⚠️ Lütfen ayarlardan telefon numaranızı girin', true);
         renderMessagesForActiveContact();
         showChatInterface(false);
     </script>
