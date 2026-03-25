@@ -12,21 +12,30 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Temel arkaplan - her zaman degrade */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            height: 100dvh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
+            padding: 0;
+            margin: 0;
         }
 
+        /* Ana container - varsayılan mobil tam ekran */
+        .app-wrapper {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Chat ana kapsayıcı */
         .chat-container {
             width: 100%;
             height: 100%;
@@ -35,6 +44,44 @@
             flex-direction: column;
             overflow: hidden;
             position: relative;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        /* Desktop görünümü: ortalanmış çerçeve */
+        @media (min-width: 768px) {
+            body {
+                padding: 24px;
+                background: linear-gradient(135deg, #1e1a3a 0%, #2d1b3e 100%);
+            }
+            .app-wrapper {
+                height: auto;
+                min-height: 0;
+                max-width: 500px;
+                width: 100%;
+                margin: 0 auto;
+                border-radius: 32px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                background: white;
+                overflow: hidden;
+            }
+            .chat-container {
+                border-radius: 32px;
+                height: 85vh;
+                max-height: 800px;
+            }
+        }
+
+        /* iPhone vb küçük ekranlarda yine tam ekran */
+        @media (max-width: 767px) {
+            .app-wrapper {
+                height: 100vh;
+                height: 100dvh;
+                border-radius: 0;
+            }
+            .chat-container {
+                border-radius: 0;
+            }
         }
 
         .app-header {
@@ -101,6 +148,7 @@
             display: flex;
             align-items: center;
             gap: 14px;
+            flex-wrap: wrap;
         }
         .chat-status-light {
             width: 14px;
@@ -162,7 +210,7 @@
             margin-right: 4px;
         }
 
-        /* INPUT KISMI - gönder tuşu sola kaydırıldı, daha responsive */
+        /* INPUT KISMI - gönder tuşu düzenli */
         .input-container {
             flex-shrink: 0;
             background: white;
@@ -195,27 +243,10 @@
             transition: background 0.2s;
             white-space: nowrap;
         }
-        #clearChatButton {
-            padding: 10px 16px;
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            border-radius: 32px;
-            font-weight: 500;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        #clearChatButton:hover {
-            background: #fee2e2;
-            border-color: #f87171;
-            color: #dc2626;
-        }
         #sendButton:hover {
             background: #3570b0;
         }
-        #sendButton:disabled, #clearChatButton:disabled {
+        #sendButton:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -300,6 +331,14 @@
         .mini-btn.primary {
             background: #4a90e2;
             color: white;
+        }
+        .mini-btn.danger {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .mini-btn.danger:hover {
+            background: #fecaca;
         }
         .warning-text {
             font-size: 0.6rem;
@@ -452,42 +491,46 @@
             gap: 8px;
             align-items: center;
         }
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body>
-    <div class="chat-container" id="chatContainer">
-        <div class="app-header">
-            <div class="logo-section">
-                <div class="logo-icon">💬</div>
-                <div class="header-text">
-                    <h2>SEYFİÇET</h2>
-                    <div class="sub-title">🔒 Telefon No ile P2P</div>
+    <div class="app-wrapper">
+        <div class="chat-container" id="chatContainer">
+            <div class="app-header">
+                <div class="logo-section">
+                    <div class="logo-icon">💬</div>
+                    <div class="header-text">
+                        <h2>SEYFİÇET</h2>
+                        <div class="sub-title">🔒 Telefon No ile P2P</div>
+                    </div>
+                </div>
+                <div class="header-buttons">
+                    <button class="icon-btn" id="settingsBtn">⚙️</button>
+                    <button class="icon-btn" id="contactsBtn">👥</button>
                 </div>
             </div>
-            <div class="header-buttons">
-                <button class="icon-btn" id="settingsBtn">⚙️</button>
-                <button class="icon-btn" id="contactsBtn">👥</button>
+            <div class="connection-bar" id="status">Başlatılıyor...</div>
+
+            <div class="current-chat-header" id="currentChatHeader" style="display: none;">
+                <div class="chat-contact-info">
+                    <div class="chat-status-light" id="chatStatusLight"></div>
+                    <span class="chat-contact-name" id="currentChatName">Seçili kişi yok</span>
+                    <span id="chatTypingIndicator" style="display:none;" class="typing-badge-small">✍️ Yazıyor...</span>
+                </div>
             </div>
-        </div>
-        <div class="connection-bar" id="status">Başlatılıyor...</div>
 
-        <div class="current-chat-header" id="currentChatHeader" style="display: none;">
-            <div class="chat-contact-info">
-                <div class="chat-status-light" id="chatStatusLight"></div>
-                <span class="chat-contact-name" id="currentChatName">Seçili kişi yok</span>
-                <span id="chatTypingIndicator" style="display:none;" class="typing-badge-small">✍️ Yazıyor...</span>
+            <div class="messages-area" id="messagesArea">
+                <div class="no-contact-selected">👈 Sağ üstten bir kişi seçin</div>
             </div>
-        </div>
 
-        <div class="messages-area" id="messagesArea">
-            <div class="no-contact-selected">👈 Sağ üstten bir kişi seçin</div>
-        </div>
-
-        <div class="input-container" id="inputContainer" style="display: none;">
-            <div class="message-input-row">
-                <input type="text" id="messageInput" placeholder="Mesaj yazın..." disabled>
-                <div class="button-group">
-                    <button id="clearChatButton" disabled>🧹 Temizle</button>
+            <div class="input-container" id="inputContainer" style="display: none;">
+                <div class="message-input-row">
+                    <input type="text" id="messageInput" placeholder="Mesaj yazın..." disabled>
                     <button id="sendButton" disabled>Gönder</button>
                 </div>
             </div>
@@ -559,7 +602,6 @@
             messagesArea: document.getElementById('messagesArea'),
             messageInput: document.getElementById('messageInput'),
             sendButton: document.getElementById('sendButton'),
-            clearChatButton: document.getElementById('clearChatButton'),
             inputContainer: document.getElementById('inputContainer'),
             currentChatHeader: document.getElementById('currentChatHeader'),
             currentChatName: document.getElementById('currentChatName'),
@@ -661,7 +703,6 @@
             updateContactStatus(contact.id, 'connected');
             setConnectedState(true);
             updateStatus(`✅ ${contact.name} ile bağlantı kuruldu`, false, true);
-            // "görüşme başladı" mesajı kaldırıldı - sadece sistem mesajı eklenmiyor
             flushPendingMessages(contact.id);
             showChatInterface(true);
             renderMessagesForActiveContact();
@@ -841,15 +882,21 @@
             });
         }
 
-        // Mesajları temizle özelliği
-        function clearChatMessages() {
-            if (!activeContactId) return;
-            if (confirm(`Tüm mesaj geçmişi silinecek. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`)) {
+        // Ayarlar menüsünden tüm mesajları temizle (aktif sohbet için)
+        function clearChatMessagesFromSettings() {
+            if (!activeContactId) {
+                alert('Şu anda açık bir sohbet yok. Mesaj geçmişini temizlemek için bir kişi seçin.');
+                return;
+            }
+            const contact = contacts.find(c => c.id === activeContactId);
+            if (confirm(`${contact?.name || 'Bu kişi'} ile tüm mesaj geçmişi silinecek. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?`)) {
                 messagesHistory[activeContactId] = [];
                 saveMessagesHistory();
                 renderMessagesForActiveContact();
                 if (unreadCounts[activeContactId]) delete unreadCounts[activeContactId];
                 renderSidebarContent();
+                updateStatus('💬 Sohbet geçmişi temizlendi', false, true);
+                setTimeout(() => updateStatus(`✅ ${myPhoneNumber} aktif`, false, true), 2000);
             }
         }
 
@@ -895,7 +942,6 @@
             isConnected = connected;
             if (elements.messageInput) elements.messageInput.disabled = !connected;
             if (elements.sendButton) elements.sendButton.disabled = !connected;
-            if (elements.clearChatButton) elements.clearChatButton.disabled = false; // her zaman aktif
             updateChatHeaderStatus();
         }
 
@@ -922,8 +968,18 @@
                         </div>
                         <div class="warning-text">⚠️ Bu numara sizin kimliğinizdir. Karşı taraf size bu numara ile bağlanır.</div>
                     </div>
+                    <hr>
+                    <div class="settings-section">
+                        <div class="settings-label">🗑️ SOHBET GEÇMİŞİ</div>
+                        <div class="settings-value">
+                            <span>Aktif sohbetin tüm mesajlarını siler</span>
+                            <button class="mini-btn danger" id="clearHistorySettingsBtn">🧹 Temizle</button>
+                        </div>
+                        <div class="warning-text">⚠️ Bu işlem geri alınamaz. Sadece şu an görüştüğünüz kişinin geçmişi silinir.</div>
+                    </div>
                 `;
                 document.getElementById('editPhoneSettingsBtn')?.addEventListener('click', () => showPhoneEditModal());
+                document.getElementById('clearHistorySettingsBtn')?.addEventListener('click', () => clearChatMessagesFromSettings());
             } else {
                 elements.sidebarTitle.innerText = '📒 Kişilerim';
                 let contactsHtml = '<div class="contacts-list-sidebar">';
@@ -1075,7 +1131,6 @@
         }
 
         elements.sendButton.onclick = sendTextMessage;
-        elements.clearChatButton.onclick = clearChatMessages;
         if (elements.messageInput) elements.messageInput.onkeypress = (e) => { if (e.key === 'Enter' && activeContactId) sendTextMessage(); };
         elements.settingsBtn.onclick = () => openSidebar('settings');
         elements.contactsBtn.onclick = () => openSidebar('contacts');
