@@ -535,16 +535,19 @@
         // Yeniden bağlanma
         let reconnectTimer = null;
         let reconnectAttempts = 0;
-        const MAX_RECONNECT_ATTEMPTS = 6;
+        const MAX_RECONNECT_ATTEMPTS = 8;
         const RECONNECT_INTERVAL_MS = 4000;
         
         // Heartbeat
         let heartbeatInterval = null;
         let lastPongTime = 0;
-        const HEARTBEAT_INTERVAL_MS = 15000;   // 15 saniyede bir ping
-        const HEARTBEAT_TIMEOUT_MS = 8000;     // 8 saniye içinde pong yoksa bağlantı kopuk
+        const HEARTBEAT_INTERVAL_MS = 15000;
+        const HEARTBEAT_TIMEOUT_MS = 8000;
         
-        // Yazma bildirimi (typing) için debounce
+        // Sağlık kontrolü
+        let healthCheckInterval = null;
+        
+        // Yazma bildirimi
         let typingTimeout = null;
         let isTypingCurrently = false;
         let stopTypingTimeout = null;
@@ -594,7 +597,6 @@
         function savePhoneNumber(phone) { let cleaned = phone.replace(/\s/g, ''); if(!cleaned) return false; localStorage.setItem('p2p_my_phone', cleaned); myPhoneNumber = cleaned; return true; }
         function getStoredPhone() { return localStorage.getItem('p2p_my_phone'); }
         
-        // Gelişmiş ICE (STUN + TURN)
         const iceConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -625,7 +627,7 @@
         function changePhoneNumber(newPhone) {
             if(!newPhone || newPhone === myPhoneNumber) return false;
             if(currentConnection) try { currentConnection.close(); } catch(e) {}
-            stopHeartbeat(); clearReconnectTimer(); clearTypingState();
+            stopHeartbeat(); stopHealthCheck(); clearReconnectTimer(); clearTypingState();
             currentConnection = null; isConnected = false; activeContactId = null; activeContactName = "";
             if(peer && !peer.destroyed) peer.destroy();
             savePhoneNumber(newPhone);
@@ -667,14 +669,16 @@
             if(!pendingMessages[contactId]?.length || !currentConnection || !isConnected || activeContactId !== contactId) return;
             let pending = [...pendingMessages[contactId]];
             pendingMessages[contactId]=[];
+            let successCount = 0;
             for(let msg of pending) {
                 if(msg.type === 'text') {
-                    try { currentConnection.send({ type: 'text', text: msg.content }); addToHistory(contactId, msg.content, 'Ben', true, 'text'); }
+                    try { currentConnection.send({ type: 'text', text: msg.content }); addToHistory(contactId, msg.content, 'Ben', true, 'text'); successCount++; }
                     catch(e){ if(!pendingMessages[contactId]) pendingMessages[contactId]=[]; pendingMessages[contactId].unshift(msg); }
                 }
             }
-            addSystemMessage(`${pending.length} bekleyen mesaj gönderildi.`);
-            updateContactStatus(contactId,'connected'); updateOnlineLed();
+            if(successCount) addSystemMessage(`${successCount} bekleyen mesaj gönderildi.`);
+            if(pendingMessages[contactId]?.length === 0) updateContactStatus(contactId,'connected');
+            updateOnlineLed();
         }
         
         function addToHistory(contactId, content, sender, isSent, msgType, isPending=false) {
@@ -691,17 +695,63 @@
         function startHeartbeat(conn) {
             stopHeartbeat(); lastPongTime = Date.now();
             heartbeatInterval = setInterval(() => {
-                if(!conn || conn.peerConnection?.iceConnectionState === 'closed' || !isConnected) { stopHeartbeat(); return; }
-                try { conn.send({ type: 'ping', time: Date.now() }); } catch(e) {}
-                if(Date.now() - lastPongTime > HEARTBEAT_TIMEOUT_MS) { console.warn("Heartbeat timeout"); dom.statusBar.innerHTML = `⚠️ Bağlantı zaman aşımı, yeniden bağlanılıyor...`; handleConnectionLost(); }
+                if(!conn || !isConnected || !activeContactId) return;
+                try { conn.send({ type: 'ping', time: Date.now() }); } catch(e) { console.warn("Ping send error", e); handleConnectionLost(); }
+                if(Date.now() - lastPongTime > HEARTBEAT_TIMEOUT_MS) { console.warn("Heartbeat timeout"); handleConnectionLost(); }
             }, HEARTBEAT_INTERVAL_MS);
         }
         function stopHeartbeat() { if(heartbeatInterval) clearInterval(heartbeatInterval); heartbeatInterval = null; }
         
+        // Sağlık kontrolü: data channel ve peerConnection durumunu izle
+        function startHealthCheck() {
+            stopHealthCheck();
+            healthCheckInterval = setInterval(() => {
+                if(!activeContactId) return;
+                if(!currentConnection) {
+                    if(isConnected) { isConnected = false; setConnectedState(false); }
+                    if(contactStatus[activeContactId] !== 'offline') { updateContactStatus(activeContactId, 'offline'); attemptReconnect(); }
+                    return;
+                }
+                // PeerJS bağlantısının altındaki peerConnection durumuna bak
+                const pc = currentConnection.peerConnection;
+                if(pc) {
+                    const state = pc.iceConnectionState;
+                    console.log(`ICE state: ${state}`);
+                    if(state === 'failed' || state === 'disconnected' || state === 'closed') {
+                        handleConnectionLost();
+                    } else if(state === 'connected' && !isConnected) {
+                        // Yeniden bağlantı başarılı olmuş olabilir, durumu düzelt
+                        if(activeContactId && currentConnection) {
+                            isConnected = true;
+                            setConnectedState(true);
+                            updateContactStatus(activeContactId, 'connected');
+                            flushPending(activeContactId);
+                            startHeartbeat(currentConnection);
+                        }
+                    }
+                }
+                // Data channel kontrolü
+                try {
+                    const dc = currentConnection.dataChannel;
+                    if(dc && (dc.readyState === 'closed' || dc.readyState === 'closing')) {
+                        console.warn("Data channel closed");
+                        handleConnectionLost();
+                    }
+                } catch(e) {}
+            }, 5000);
+        }
+        function stopHealthCheck() { if(healthCheckInterval) clearInterval(healthCheckInterval); healthCheckInterval = null; }
+        
         function handleConnectionLost() {
             if(!activeContactId) return;
+            if(isConnected === false && currentConnection === null) return; // zaten kopuk
+            console.log("Connection lost, cleaning up");
             if(currentConnection) { try { currentConnection.close(); } catch(e) {} currentConnection = null; }
-            isConnected = false; setConnectedState(false); updateContactStatus(activeContactId, 'offline'); updateOnlineLed();
+            isConnected = false;
+            setConnectedState(false);
+            updateContactStatus(activeContactId, 'offline');
+            updateOnlineLed();
+            stopHeartbeat();
             attemptReconnect();
         }
         
@@ -731,15 +781,8 @@
         
         function clearReconnectTimer() { if(reconnectTimer) clearTimeout(reconnectTimer); reconnectTimer = null; reconnectAttempts = 0; }
         
-        // Yazma bildirimi gönderme
-        function sendTypingStart() {
-            if(!currentConnection || !isConnected) return;
-            try { currentConnection.send({ type: 'typing' }); } catch(e) {}
-        }
-        function sendTypingStop() {
-            if(!currentConnection || !isConnected) return;
-            try { currentConnection.send({ type: 'stopTyping' }); } catch(e) {}
-        }
+        function sendTypingStart() { if(!currentConnection || !isConnected) return; try { currentConnection.send({ type: 'typing' }); } catch(e) {} }
+        function sendTypingStop() { if(!currentConnection || !isConnected) return; try { currentConnection.send({ type: 'stopTyping' }); } catch(e) {} }
         
         function onTypingInput() {
             if(!activeContactId || !isConnected) return;
@@ -762,7 +805,7 @@
                 if(activeContactId===contactId && currentConnection===conn) {
                     isConnected=true; setConnectedState(true); updateContactStatus(contactId,'connected');
                     dom.statusBar.innerHTML = `✅ ${contactName} ile bağlantı aktif`;
-                    clearReconnectTimer(); flushPending(contactId); updateOnlineLed(); startHeartbeat(conn);
+                    clearReconnectTimer(); flushPending(contactId); updateOnlineLed(); startHeartbeat(conn); startHealthCheck();
                 }
             });
             let typingTimer;
@@ -779,12 +822,14 @@
             });
             conn.on('close', () => {
                 if(activeContactId===contactId && currentConnection===conn) {
+                    console.log("Connection closed by remote");
                     updateContactStatus(contactId,'offline'); setConnectedState(false); currentConnection=null; isConnected=false;
                     dom.statusBar.innerHTML = `⚠️ ${contactName} bağlantısı kesildi, yeniden bağlanılıyor...`;
                     updateOnlineLed(); stopHeartbeat(); attemptReconnect();
                 }
             });
             conn.on('error', (err) => {
+                console.error("Connection error", err);
                 if(activeContactId===contactId && currentConnection===conn) {
                     updateContactStatus(contactId,'offline'); setConnectedState(false); currentConnection=null; isConnected=false;
                     dom.statusBar.innerHTML = `⚠️ ${contactName} bağlantı hatası, yeniden deneniyor...`;
@@ -815,7 +860,7 @@
         }
         
         function disconnectCurrent() {
-            if(currentConnection) { let contact = contacts.find(c=>c.id===activeContactId); if(contact) updateContactStatus(activeContactId,'offline'); currentConnection.close(); currentConnection=null; isConnected=false; setConnectedState(false); dom.statusBar.innerHTML = `❌ Bağlantı kesildi`; updateOnlineLed(); stopHeartbeat(); clearReconnectTimer(); clearTypingState(); }
+            if(currentConnection) { let contact = contacts.find(c=>c.id===activeContactId); if(contact) updateContactStatus(activeContactId,'offline'); currentConnection.close(); currentConnection=null; isConnected=false; setConnectedState(false); dom.statusBar.innerHTML = `❌ Bağlantı kesildi`; updateOnlineLed(); stopHeartbeat(); stopHealthCheck(); clearReconnectTimer(); clearTypingState(); }
         }
         
         function setConnectedState(connected) {
@@ -831,7 +876,6 @@
             if(!activeContactId) { addSystemMessage('Önce bir kişi seçin.'); return; }
             let text=dom.messageInput.value.trim();
             if(!text) return;
-            // Yazma bildirimini durdur
             if(isTypingCurrently) { isTypingCurrently = false; sendTypingStop(); }
             if(typingTimeout) clearTimeout(typingTimeout);
             if(stopTypingTimeout) clearTimeout(stopTypingTimeout);
