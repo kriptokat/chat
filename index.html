@@ -127,7 +127,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: #eef2ff;  /* Daha belirgin arkaplan */
+            background: #eef2ff;
             padding: 6px 14px 6px 12px;
             border-radius: 40px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -480,7 +480,7 @@
             </div>
         </div>
         
-        <!-- Durum çubuğu (bağlantı bildirimleri) -->
+        <!-- Durum çubuğu (bağlantı bildirimleri artık sadece kritik hatalar için) -->
         <div class="chat-header" id="statusBar">
             💬 SEYFİÇET'e hoş geldiniz
         </div>
@@ -833,6 +833,7 @@
             dom.messageInput.value='';
         }
         
+        // Mesajları render et - Alınan mesajlarda isim gösterme
         function renderMessages() {
             if(!dom.messagesArea) return;
             dom.messagesArea.innerHTML = '';
@@ -842,13 +843,16 @@
             }
             let history = messagesHistory[activeContactId] || [];
             history.forEach(msg => {
-                let div = document.createElement('div'); div.className = `message ${msg.isSent ? 'sent' : 'received'}`;
+                let div = document.createElement('div'); 
+                div.className = `message ${msg.isSent ? 'sent' : 'received'}`;
                 let timeStr = new Date(msg.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-                let contentHtml = `<div class="message-content">${!msg.isSent ? `<strong>${escapeHtml(msg.sender)}:</strong> ` : ''}${escapeHtml(msg.content)}</div>`;
+                // Alınan mesajlarda isim gösterme (sadece mesaj içeriği)
+                let contentHtml = `<div class="message-content">${escapeHtml(msg.content)}</div>`;
                 let readHtml = msg.isSent ? `<div class="read-status ${msg.read ? 'read' : ''}">${msg.read ? '✓✓ Okundu' : '✓ Gönderildi'}</div>` : '';
                 div.innerHTML = contentHtml + `<div style="font-size:0.55rem; color:#94a3b8;">${timeStr}</div>` + readHtml;
                 dom.messagesArea.appendChild(div);
             });
+            // Her mesaj render edildiğinde en alta kaydır - aşağıdan yukarıya doğru akış için
             dom.messagesArea.scrollTop = dom.messagesArea.scrollHeight;
             if(unreadCounts[activeContactId]) delete unreadCounts[activeContactId];
         }
@@ -908,6 +912,7 @@
                             <div class="dropdown-contact-info">
                                 <div class="dropdown-contact-name">
                                     ${escapeHtml(contact.name)}
+                                    ${status === 'connected' ? '<span class="contact-badge-sm" style="background:#22c55e20; color:#166534;">🟢 Çevrimiçi</span>' : ''}
                                     ${pendingCount ? `<span class="pending-badge-sm">📬 ${pendingCount}</span>` : ''}
                                     ${unreadCount ? `<span class="unread-badge-sm">🔔 ${unreadCount}</span>` : ''}
                                 </div>
