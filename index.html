@@ -483,12 +483,12 @@
             💬 SEYFİÇET'e hoş geldiniz
         </div>
         
-        <!-- Aktif sohbet bilgisi + bağlantı durumu LED'i (daha belirgin) -->
+        <!-- Aktif sohbet bilgisi + bağlantı durumu LED'i (sadece yeşil nokta, yazı yok) -->
         <div class="current-chat-info">
             <div class="chat-name-with-status">
                 <span>💬</span>
                 <span id="activeContactName" class="current-chat-name">Seçili kişi yok</span>
-                <span id="activeBadge" class="active-chat-badge" style="display: none;">AKTİF</span>
+                <span id="activeBadge" class="active-chat-badge" style="display: none;"></span>
                 <span id="onlineLed" class="online-status-led offline" style="display: none;"></span>
             </div>
             <span id="typingIndicator" style="display:none;" class="typing-indicator">✍️ Yazıyor...</span>
@@ -605,19 +605,14 @@
             dom.onlineLed.className = 'online-status-led';
             if(status === 'connected') {
                 dom.onlineLed.classList.add('online');
-                dom.activeBadge.style.display = 'inline-block';
-                dom.activeBadge.innerText = '🟢 ÇEVRİMİÇİ';
-                dom.activeBadge.style.background = '#22c55e';
+                // Badge'i sadece yeşil nokta göster, yazıyı tamamen kaldır
+                dom.activeBadge.style.display = 'none';
             } else if(status === 'connecting' || status === 'pending') {
                 dom.onlineLed.classList.add('connecting');
-                dom.activeBadge.style.display = 'inline-block';
-                dom.activeBadge.innerText = '⏳ BAĞLANIYOR';
-                dom.activeBadge.style.background = '#eab308';
+                dom.activeBadge.style.display = 'none';
             } else {
                 dom.onlineLed.classList.add('offline');
-                dom.activeBadge.style.display = 'inline-block';
-                dom.activeBadge.innerText = '⚫ KAPALI';
-                dom.activeBadge.style.background = '#64748b';
+                dom.activeBadge.style.display = 'none';
             }
         }
         
