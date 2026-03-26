@@ -719,16 +719,15 @@
         
         function setupConnection(conn, contactId, contactName) {
             conn.on('open', () => {
-                if(activeContactId===contactId) {
-                    isConnected=true; 
-                    setConnectedState(true);
-                    updateContactStatus(contactId,'connected');
-                    dom.statusBar.innerHTML = `✅ ${contactName} ile bağlantı aktif`;
-                    // Gereksiz bildirim mesajı kaldırıldı (sadece durum barında gösteriliyor)
-                    flushPending(contactId);
-                    updateOnlineLed();
-                }
-            });
+    if(activeContactId===contactId) {
+        isConnected=true; 
+        setConnectedState(true);
+        updateContactStatus(contactId,'connected');
+        // dom.statusBar.innerHTML = `✅ ${contactName} ile bağlantı aktif`;  // BU SATIRI SİL VEYA YORUMLA
+        flushPending(contactId);
+        updateOnlineLed();
+    }
+});
             let typingTimer;
             conn.on('data', (data) => {
                 if(activeContactId===contactId && currentConnection===conn && data.type === 'text') {
@@ -839,22 +838,22 @@
             updateOnlineLed();
         }
         
-        function handleIncoming(incoming) {
-            let contact=contacts.find(c=>c.phoneNumber===incoming.peer);
-            if(!contact) { incoming.close(); return; }
-            if(currentConnection && isConnected) { incoming.close(); return; }
-            if(currentConnection) currentConnection.close();
-            currentConnection=incoming;
-            activeContactId=contact.id; activeContactName=contact.name;
-            dom.activeContactNameSpan.innerText=contact.name;
-            renderMessages();
-            setupConnection(currentConnection, contact.id, contact.name);
-            updateContactStatus(contact.id,'connected');
-            setConnectedState(true);
-            flushPending(contact.id);
-            dom.statusBar.innerHTML = `✅ ${contact.name} ile bağlantı kuruldu`;
-            updateOnlineLed();
-        }
+function handleIncoming(incoming) {
+    let contact=contacts.find(c=>c.phoneNumber===incoming.peer);
+    if(!contact) { incoming.close(); return; }
+    if(currentConnection && isConnected) { incoming.close(); return; }
+    if(currentConnection) currentConnection.close();
+    currentConnection=incoming;
+    activeContactId=contact.id; activeContactName=contact.name;
+    dom.activeContactNameSpan.innerText=contact.name;
+    renderMessages();
+    setupConnection(currentConnection, contact.id, contact.name);
+    updateContactStatus(contact.id,'connected');
+    setConnectedState(true);
+    flushPending(contact.id);
+    // dom.statusBar.innerHTML = `✅ ${contact.name} ile bağlantı kuruldu`;  // BU SATIRI SİL VEYA YORUMLA
+    updateOnlineLed();
+}
         
         function saveContacts() { localStorage.setItem('p2p_contacts_v3', JSON.stringify(contacts)); }
         function saveMessages() { localStorage.setItem('p2p_messages_v3', JSON.stringify(messagesHistory)); }
